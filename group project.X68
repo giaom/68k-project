@@ -502,7 +502,7 @@ data           MOVE.L      #0,D0
 
 DONE           STOP        #$2700
 *------------Note:check if the ea is vaild, if it is not vaild then it is data
-*------------DO STORES THE OUTPUT(PRINT OUT THE CURRENT WORD IT POINTING TO AND MOVE A WORD)
+*------------DO STORES THE OUTPUT (state what kind of instrution it is)
 *------------0-DATA
 *------------1-MOVE.B
 *------------2-MOVE.L
