@@ -5,8 +5,7 @@
 * Store starting address at A6, and ending adress at A7
 *-----------------------------------------------------------
       
-START:  ORG     $1000
-
+START:  ORG     $1000 
 ; Code
     BRA STARTADDR
     
@@ -52,15 +51,7 @@ ISDIGIT:
     
     ADD.B   D1,D2       ; Temp to subtotal     
     DBRA    D3,LOOP1    ; Repeat until end of memory block
-    
-   
-    
-EXTRAZEROS: ; get rid of trailing zeros for mantissa
-    BTST    #0,D4            ; check if LSB is 0
-    BNE     DONE             ; exit loop if LSB is 1
-    LSR.L   #1,D4            ; shift number right by 1 bit
-    DBRA    D3,EXTRAZEROS   
-    
+        
 DONE:
     CMP     #1,D6
     BEQ     DONE2            ;check if storing start/end
