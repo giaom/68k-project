@@ -107,6 +107,7 @@ DECODE:
                MOVE.B  #shift,D1       *Shift 12 bits to the right  
                LSR.W   D1,D0           *Move the bits
                ;MOVE.L   #example,D1    *Store that full 16 bits at d1 
+               MOVE.W  (A5),D1
                CMP      #0,D0
 jmp_table      BEQ.L     code0000
                CMP      #1,D0
