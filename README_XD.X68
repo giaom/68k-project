@@ -102,13 +102,11 @@ shift            EQU     12                   *Shift 12 bits
 
 DECODE:
 *------------Use A0, d1,d0,d2,A2,A1
-               LEA     jmp_table,A0    *Index into the table
-               CLR.L   D0              *Zero it
                ;MOVE.W  #example,D0     *We'll play with it here
                MOVE.W  (A5),D0
                MOVE.B  #shift,D1       *Shift 12 bits to the right  
                LSR.W   D1,D0           *Move the bits
-               MOVE.L   #example,D1    *Store that full 16 bits at d1 
+               ;MOVE.L   #example,D1    *Store that full 16 bits at d1 
                CMP      #0,D0
 jmp_table      BEQ.L     code0000
                CMP      #1,D0
