@@ -7,6 +7,8 @@
 *-----------------------------------------------------------
       
 START:  ORG     $1000 
+    MOVE    #0,D5       * Used to track print lines per page
+
 ; Code
     BRA STARTADDR
 
@@ -62,15 +64,32 @@ INPUT_DONE2:
     MOVE.L  D2,A6            ;store ending add at A6    
     CMP     #1,D6
     BNE     ENDADDR          ;check if we did end yet
-    
+
+
 DECODE_LOOP:    
     JSR     DECODE
     
     JSR     OUTPUT
     MOVE.W  (A5)+,D0
-   ; ADDQ.W  #1,A5
+    
+; After every 10 prints, prompt user to press a key to continue printing
+    ADD.B   #1,D5   * D5 used to track prints
+    CMP     #10,D5
+    BLE     CHECK_END
+    
+    ; Prompt for [Enter]
+    MOVE.B  #0,D5
+    LEA     continuation_prompt,A1
+    MOVE.B  #14,D0
+    TRAP    #15
+    
+    ; Read single char from keyboard
+    MOVE.B  #5,D0
+    TRAP    #15
+    
+CHECK_END
     CMPA.W  A6,A5
-    BLE     DECODE_LOOP
+    BLE     DECODE_LOOP    
     
 ; Ask user if loop again:
     LEA     repeat,A1
@@ -102,6 +121,8 @@ shift            EQU     12                   *Shift 12 bits
 
 DECODE:
 *------------Use A0, d1,d0,d2,A2,A1
+               LEA     jmp_table,A0    *Index into the table
+               CLR.L   D0              *Zero it
                ;MOVE.W  #example,D0     *We'll play with it here
                MOVE.W  (A5),D0
                MOVE.B  #shift,D1       *Shift 12 bits to the right  
@@ -281,7 +302,7 @@ BRA1           BTST        #9,D1
                MOVE.L      #1,D1        
                JMP         DONE
                
-BGTBLE         BTST        #10,D1
+BGTBLE           BTST        #10,D1
                BEQ         data
                BTST        #9,D1
                BEQ         data
@@ -316,7 +337,7 @@ OR             BTST        #7,D1
                BTST        #6,D1
                BNE         ORW
                MOVE.L      #19,D0
-               MOVE.L      #1,D1        OR.B
+               MOVE.L      #1,D1    ;OR.B
                JMP         DONE 
                
 ORW            MOVE.L      #20,D0   ;OR.W
@@ -343,7 +364,7 @@ SUB            BTST        #7,D1
                BTST        #6,D1
                BNE         SUBW
                MOVE.L      #22,D0
-               MOVE.L      #1,D1        SUB.B
+               MOVE.L      #1,D1    ;SUB.B
                JMP         DONE 
                
 SUBW           MOVE.L      #23,D0   ;SUB.W
@@ -663,17 +684,14 @@ DONE           RTS        ;STOP        #$2700
 
 
 ;=======[TRANSLATE: Source & destination operand in op-code]===========
+; Use first 16-bits to see intruction type. For handling larger instruction types.
 
 ;============[OUTPUT: memory location, op-code, operand]===============
 OUTPUT:
-
 ; Need to use D0 and D2, so move variables
     MOVE.B  D0, D6 * Store op code key
     MOVE.B  D1, D7 * Store bool, does opcode have atleast 1 EA?
-    MOVE.B  D0, D4 * Store op code key
-    MOVE.B  D1, D5 * Store bool, does opcode have atleast 1 EA?
 
-; Assumes memory location stored in D5
 PRINT_MEM_LOC:
 ; print newline
     LEA     newline, A1
@@ -686,10 +704,11 @@ PRINT_MEM_LOC:
     MOVE.B  #15,D0
     TRAP    #15 
     
-    MOVE.B  D4, D6 * Store op code key
-    MOVE.B  D5, D7 * Store bool, does opcode have atleast 1 EA?
+    MOVE.B  D0, D6 * Store op code key
+    MOVE.B  D1, D7 * Store bool, does opcode have atleast 1 EA?
 
-CMPRTO_PRINT:
+; Compare op-code key to decide on message to print
+CMPR_OP_KEY:
     CMP.B   #1, D6 
     BEQ     load_mssg_MOVEB
     CMP.B   #2, D6 
@@ -778,7 +797,6 @@ CMPRTO_PRINT:
     CMP.B   #37, D6 
     BEQ     load_mssg_BCC
     
-    ; Memory shifts
     CMP.B   #38, D6 
     BEQ     load_mssg_ROL
     CMP.B   #39, D6 
@@ -846,7 +864,7 @@ load_mssg_MOVEL
 load_mssg_MOVEW
      LEA     mssg3, A1
      JMP     PRINT_OPCODE
-;================================================================================================================       
+      
 load_mssg_MOVEAL
      LEA     mssg4, A1
      JMP     PRINT_OPCODE
@@ -1086,6 +1104,11 @@ PRINT_OPCODE
 PRINT_OPERAND
 ; to-do
 
+; print newline
+    LEA     newline, A1
+    MOVE.B  #14,D0
+    TRAP    #15
+
     RTS
     
 ;=======================[OUTER LOOP condition]==========================
@@ -1098,6 +1121,7 @@ CR       EQU     $0D
 LF       EQU     $0A
 
 newline DC.B    CR,LF,'',0
+continuation_prompt DC.B    CR,LF,'Press any key to continue...',CR,LF,0
 
 prompt1  DC.B CR,LF,'Enter starting adress in hexadecimal: ',CR,LF,0
 prompt2  DC.B CR,LF,'Enter ending adress in hexadecimal: ',CR,LF,0
@@ -1106,7 +1130,6 @@ repeat   DC.B CR,LF,'Do you want to loop again? (Y/N): ',CR,LF,0
 
 DATASTRING  DC.B    'DATA ',0
 
-;==========================================================================================================
 mssg1 DC.B    '     MOVE.B',0
 mssg2 DC.B    '     MOVE.L',0
 mssg3 DC.B    '     MOVE.W',0
@@ -1131,41 +1154,41 @@ mssg21 DC.B   '     OR.L',0
 mssg22 DC.B   '     SUB.B',0
 mssg23 DC.B   '     SUB.W',0
 mssg24 DC.B   '     SUB.L',0
-mssg25 DC.B   '     AND.B',CR,LF,0
-mssg26 DC.B   '     AND.W',CR,LF,0
-mssg27 DC.B   '     AND.L',CR,LF,0
-mssg28 DC.B   '     ADDA.L',CR,LF,0
-mssg29 DC.B   '     ADDA.W',CR,LF,0
-mssg30 DC.B   '     ADD.B',CR,LF,0
-mssg31 DC.B   '     ADD.W',CR,LF,0
-mssg32 DC.B   '     BGT',CR,LF,0
-mssg33 DC.B   '     BLE',CR,LF,0
-mssg34 DC.B   '     BRA',CR,LF,0
-mssg35  DC.B  '     BEQ',CR,LF,0
-mssg36  DC.B  '     BCC',CR,LF,0
+mssg25 DC.B   '     AND.B',0
+mssg26 DC.B   '     AND.W',0
+mssg27 DC.B   '     AND.L',0
+mssg28 DC.B   '     ADDA.L',0
+mssg29 DC.B   '     ADDA.W',0
+mssg30 DC.B   '     ADD.B',0
+mssg31 DC.B   '     ADD.W',0
+mssg32 DC.B   '     BGT',0
+mssg33 DC.B   '     BLE',0
+mssg34 DC.B   '     BRA',0
+mssg35  DC.B  '     BEQ',0
+mssg36  DC.B  '     BCC',0
 mssg37  DC.B  '     ROL',0
 mssg38  DC.B  '     ROR',0
-mssg39  DC.B  '     LSL',CR,LF,0
-mssg40  DC.B  '     LSR',CR,LF,0
-mssg41  DC.B  '     ASR',CR,LF,0
-mssg42  DC.B  '     ASL',CR,LF,0
-mssg43  DC.B  '     ROR.L',CR,LF,0
-mssg44  DC.B  '     ROR.W',CR,LF,0
-mssg45  DC.B  '     ROR.B',CR,LF,0
-mssg46  DC.B  '     ROL.L',CR,LF,0
-mssg47  DC.B  '     ROL.W',CR,LF,0
-mssg48  DC.B  '     ROL.B',CR,LF,0
-mssg49  DC.B  '     LSL.L',CR,LF,0
-mssg50  DC.B  '     LSL.W',CR,LF,0
-mssg51  DC.B  '     LSL.B',CR,LF,0
-mssg52  DC.B  '     LSR.L',CR,LF,0
-mssg53  DC.B  '     LSR.W',CR,LF,0
-mssg54  DC.B  '     LSR.B',CR,LF,0
-mssg55  DC.B  '     ASR.L',CR,LF,0
-mssg56  DC.B  '     ASR.W',CR,LF,0
-mssg57  DC.B  '     ASR.B',CR,LF,0
-mssg58  DC.B  '     ASL.L',CR,LF,0
-mssg59  DC.B  '     ASL.W',CR,LF,0
-mssg60  DC.B  '     ASL.B',CR,LF,0
+mssg39  DC.B  '     LSL',0
+mssg40  DC.B  '     LSR',0
+mssg41  DC.B  '     ASR',0
+mssg42  DC.B  '     ASL',0
+mssg43  DC.B  '     ROR.L',0
+mssg44  DC.B  '     ROR.W',0
+mssg45  DC.B  '     ROR.B',0
+mssg46  DC.B  '     ROL.L',0
+mssg47  DC.B  '     ROL.W',0
+mssg48  DC.B  '     ROL.B',0
+mssg49  DC.B  '     LSL.L',0
+mssg50  DC.B  '     LSL.W',0
+mssg51  DC.B  '     LSL.B',0
+mssg52  DC.B  '     LSR.L',0
+mssg53  DC.B  '     LSR.W',0
+mssg54  DC.B  '     LSR.B',0
+mssg55  DC.B  '     ASR.L',0
+mssg56  DC.B  '     ASR.W',0
+mssg57  DC.B  '     ASR.B',0
+mssg58  DC.B  '     ASL.L',0
+mssg59  DC.B  '     ASL.W',0
+mssg60  DC.B  '     ASL.B',0
 
     END    START        
