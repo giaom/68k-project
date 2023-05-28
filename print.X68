@@ -13,7 +13,7 @@ LF          EQU     $0A
 
 ; Assumes memory location stored in D5
 PRINT_MEM_LOC
-    MOVE.L  D5,D1
+    MOVE.W  D5,D1
     MOVE.B  #14,D0
     TRAP    #15 
 
