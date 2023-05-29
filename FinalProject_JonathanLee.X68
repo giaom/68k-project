@@ -18,17 +18,20 @@ LF          EQU     $0A                 * line feed
 START:                  ; first instruction of program
 
 * Put program code here
- LEA        ea_mode_table,A5 * load EA_mode jump table
-            CLR.L   D2
-            CLR.L   D3
-            CLR.L   D4           
-            CLR.L   D6
-            MOVE.W  D7,D6                       * move word into D6 for manipulation
-            ANDI.W  #$003F,D6                   * leave only the mode bits
+
+* EA Routine
+getEA
+            LEA         ea_mode_table,A5 * load EA_mode jump table
+            CLR.L       D2
+            CLR.L       D3
+            CLR.L       D4           
+            CLR.L       D6
+            MOVE.W      D7,D6                   * move word into D6 for manipulation
+            ANDI.W      #$003F,D6               * leave only the mode bits
             MOVE.B      #3,D1                   * Store number of bits we wish to shift            
             LSR.W       D1,D6                   * Shift to the Right to isolate mode bits            
 
-            MULU      #6,D6                     * Form Offset for passing to Jump Index table            
+            MULU        #6,D6                   * Form Offset for passing to Jump Index table            
             JSR         00(A5,D6)               * Now we have the index, back to Index table        
 
             RTS                                 * return from EA routine
@@ -37,14 +40,14 @@ START:                  ; first instruction of program
 
 ***EA_mode jump table ***   
 ea_mode_table                                   * table holds the different EA modes
-            JMP     EAcode000                   * Direct Data Register
-            JMP     EAcode001                   * Direct Address Register
-            JMP     EAcode010                   * Indirect Address Register
-            JMP     EAcode011                   * Indirect Address Register with Post Increment
-            JMP     EAcode100                   * Indirect Address Register with Pre Decrement
-            JMP     EAcode101                   * Indirect Address Register using Index
-            JMP     EAcode110                   * 
-            JMP     EAcode111                   * Absolute or Immediate EA
+            JMP         EAcode000               * Direct Data Register
+            JMP         EAcode001               * Direct Address Register
+            JMP         EAcode010               * Indirect Address Register
+            JMP         EAcode011               * Indirect Address Register with Post Increment
+            JMP         EAcode100               * Indirect Address Register with Pre Decrement
+            JMP         EAcode101               * Indirect Address Register using Index
+            JMP         EAcode110               * 
+            JMP         EAcode111               * Absolute or Immediate EA
 
 *Data Register Direct Dn
 EAcode000
@@ -286,7 +289,7 @@ moveSize    MOVE.W  D7,D6                       * get fresh copy to determine MO
             BNE     badInst                     * No- then badInst        
 moveSizeW   ORI.W   #$0040,D3                   * add size 01 in bits 6-7 (4) into D3
             JMP     mSizeEnd                    * skip to end once done
-moveSizeL   ORI.W   #$0080,D3                   * add size 10 in bits 6-7 (4) into D3
+moveSizeL   ORI.W   #$0080,D3                       * add size 10 in bits 6-7 (4) into D3
 mSizeEnd    RTS 
 
     SIMHALT             ; halt simulator
