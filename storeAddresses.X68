@@ -2,7 +2,7 @@
 * Title      : Dissambler store addresses function
 * Written by : Aisha M
 * Description:  function to store input from user 
-* Store starting address at A6, and ending adress at A7
+* Store starting address at A5, and ending adress at A6
 *-----------------------------------------------------------
       
 START:  ORG     $1000 
@@ -55,9 +55,9 @@ ISDIGIT:
 DONE:
     CMP     #1,D6
     BEQ     DONE2            ;check if storing start/end
-    MOVE.L  D2,A6            ;store starting add at A6
+    MOVE.L  D2,A5            ;store starting add at A5
 DONE2:
-    MOVE.L  D2,A7            ;store ending add at A7    
+    MOVE.L  D2,A6            ;store ending add at A6    
     CMP     #1,D6
     BNE     ENDADDR          ;check if we did end yet
     
