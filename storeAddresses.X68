@@ -64,7 +64,8 @@ DONE2:
     
     ; Call computing subroutine [MERGE CODE]
     ; Call output subroutine [MERGE CODE]
-    
+ 
+AGAIN:   
     ; Ask user if loop again:
     LEA     repeat,A1
     MOVE.B  #14,D0
@@ -78,7 +79,12 @@ DONE2:
     MOVE    #0,D6     ; Reset ending adress to not set
     CMP.B   #89, D1   ; 'Y' - ASCII value 89
     BEQ     START     ; Branch if equal (user wants to loop)
-   
+    CMP.B   #121, D1   ; 'y' - ASCII value 121
+    BEQ     START     ; Branch if equal (user wants to loop)
+
+    CMP.B   #78, D1   ; 'N' - ASCII value 
+    BNE     AGAIN     ; Branch to re ask if typo
+
     SIMHALT           
 
 ; Output   
