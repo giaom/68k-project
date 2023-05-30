@@ -12,10 +12,10 @@ TEST_SUB:   DC  $9405
             DC  $9415
             DC  $941D
             DC  $9425
-            DC  $942D
-            DC  $1234
-            DC  $9435
-            DC  $1234
+            ;DC  $942D
+            ;DC  $1234
+            ;DC  $9435
+            ;DC  $1234
             DC  $9438
             DC  $1234
             DC  $9439
@@ -1134,6 +1134,10 @@ PRINT_OPCODE
     MOVE.B  #14,D0      
     TRAP    #15         * Displays Message
     
+    
+    
+SUB_ADDRESSING:
+
     MOVE.B  #$9,D1  ; print tab after opcode
     MOVE.B  #6,D0
     TRAP    #15
@@ -1141,24 +1145,184 @@ PRINT_OPCODE
 
     ; move opmode into D2
     MOVE.W  (A5), D2
-    AND.W  #$01C0, D2
+    LSR.W   #6,D2
+    AND.W  #$7, D2
     
-    CMP.B   #0,D2
-    BEQ     DREG
+    CMP.B   #8,D2
+    BLT     EA_REG
     
     BRA DONE_LOAD
     
-DREG:
-    MOVE.B  #$44,D1
+EA_REG:
+    ; move mode into D3
+    MOVE.W  (A5), D3
+    LSR.W   #3,D3
+    AND.W  #$7, D3
+    
+    CMP.B   #0, D3
+    BEQ     PRINT_Dn
+    
+    CMP     #1, D3
+    BEQ     PRINT_An
+    
+    CMP     #2, D3
+    BEQ     PRINT_RAn
+    
+    CMP     #3, D3
+    BEQ     PRINT_RAnI
+    
+    CMP     #4, D3
+    BEQ     PRINT_RAnD
+    
+    CMP     #7, D3
+    BEQ     PRINT_Rxxx
+    
+    BRA     DONE_LOAD
+
+PRINT_Dn:
+    MOVE.B  #$44,D1 ; print D
     MOVE.B  #6,D0
     TRAP    #15
 
+    JSR     PRINT_EA
+    
+    LEA     comma, A1
+    MOVE.B  #14,D0
+    TRAP    #15
+    
+    JSR     PRINT_DREG
+    
+    BRA     DONE_LOAD
+    
+PRINT_An:
+    MOVE.B  #$41,D1 ; print A
+    MOVE.B  #6,D0
+    TRAP    #15
+
+    JSR     PRINT_EA
+    
+    LEA     comma, A1
+    MOVE.B  #14,D0
+    TRAP    #15
+    
+    JSR     PRINT_DREG
+    BRA     DONE_LOAD
+
+PRINT_RAn:
+    LEA     premssg_pA, A1
+    MOVE.B  #14,D0
+    TRAP    #15
+
+    JSR     PRINT_EA
+    
+    LEA     postmssg_p, A1
+    MOVE.B  #14,D0
+    TRAP    #15
+    
+    LEA     comma, A1
+    MOVE.B  #14,D0
+    TRAP    #15
+    
+    JSR     PRINT_DREG
+    BRA     DONE_LOAD
+    
+PRINT_RAnI:
+    LEA     premssg_pA, A1
+    MOVE.B  #14,D0
+    TRAP    #15
+
+    JSR     PRINT_EA
+    
+    LEA     postmssg_p_plus, A1
+    MOVE.B  #14,D0
+    TRAP    #15
+    
+    LEA     comma, A1
+    MOVE.B  #14,D0
+    TRAP    #15
+    
+    JSR     PRINT_DREG
+    BRA     DONE_LOAD
+
+PRINT_RAnD:
+    LEA     premssg_minus_pA, A1
+    MOVE.B  #14,D0
+    TRAP    #15
+
+    JSR     PRINT_EA
+    
+    LEA     postmssg_p, A1
+    MOVE.B  #14,D0
+    TRAP    #15
+    
+    LEA     comma, A1
+    MOVE.B  #14,D0
+    TRAP    #15
+    
+    JSR     PRINT_DREG
+    BRA     DONE_LOAD
+
+PRINT_Rxxx:
+    LEA     premssg_hex, A1
+    MOVE.B  #14,D0
+    TRAP    #15
+
+    MOVE.W  (A5), D2
+    AND.W   #7, D2
+    MOVE.L  A5, A4
+    ADD     #2, A4
+    
+    CMP.B   #0, D2
+    BEQ     WORD_XXX
+    
+    MOVE.L  #4, D3
+    LEA     postmssg_L, A3
+    MOVE.W  (A5), D2
+    MOVE.L (A4), D1
+    BRA POST_WORD_XXX
+    
+WORD_XXX:
+    MOVE.L  #2, D3
+   LEA     postmssg_W, A3
+    MOVE.W  (A4), D1
+    
+POST_WORD_XXX:    
+    MOVE.B  #15, D0
+    MOVE.B  #16, D2
+    TRAP    #15
+    
+    MOVE.L   A3, A1
+    MOVE.B  #14,D0
+    TRAP    #15
+    
+    LEA     comma, A1
+    MOVE.B  #14,D0
+    TRAP    #15
+    
+    JSR     PRINT_DREG
+    ADD     D3, A5
+    BRA     DONE_LOAD
+
+PRINT_EA:
     MOVE.W  (A5), D1
-    LSL.W   #4, D1
-    MOVE.B  #13, D0
-    LSR.W   D0, D1
+    AND.W   #7, D1
     MOVE.B  #3, D0
     TRAP    #15
+    RTS
+
+PRINT_DREG:
+    MOVE.B  #$44,D1 ; print D
+    MOVE.B  #6,D0
+    TRAP    #15
+PRINT_REG:
+    MOVE.L  #0,D1
+    MOVE.W  (A5), D1
+    LSR.W   #8, D1
+    LSR.W   #1, D1
+    AND.W   #7, D1
+    MOVE.B  #3, D0
+    TRAP    #15
+    RTS
 
 
 DONE_LOAD ; place-holder
@@ -1181,6 +1345,7 @@ PRINT_OPERAND
 ; Output   
 CR       EQU     $0D
 LF       EQU     $0A
+HT       EQU     $09
 
 
 prompt1  DC.B CR,LF,'Enter starting adress in hexadecimal: ',CR,LF,0
@@ -1192,20 +1357,24 @@ continuation_prompt DC.B    CR,LF,'Press any key to continue...',CR,LF,0
 DATASTRING  DC.B    'DATA ',0
 
 ; pre
-premssg_tag          DC.B  '   #',0
-premssg_A            DC.B  '   A',0
-premssg_D            DC.B  '   D',0
-premssg_p            DC.B  '   (',0
-premssg_pA           DC.B  '   (A',0
-premssg_minus_pA     DC.B  '   -(A',0
+premssg_hex          DC.B  '$',0
+premssg_tag          DC.B  '#',0
+premssg_A            DC.B  'A',0
+premssg_D            DC.B  'D',0
+premssg_p            DC.B  '(',0
+premssg_pA           DC.B  '(A',0
+premssg_minus_pA     DC.B  '-(A',0
 
 ; post
 postmssg_astr        DC.B  '*',CR,LF,0
-postmssg_p_plus      DC.B  ')+',CR,LF,0
-postmssg_p           DC.B  ')',CR,LF,0
-postmssg_p_B         DC.B  ').B',CR,LF,0
-postmssg_p_W         DC.B  ').W',CR,LF,0
-postmssg_p_L         DC.B  ').L',CR,LF,0
+postmssg_p_plus      DC.B  ')+',0
+postmssg_p           DC.B  ')',0
+postmssg_p_B         DC.B  ').B',0
+postmssg_p_W         DC.B  ').W',0
+postmssg_p_L         DC.B  ').L',0
+
+postmssg_W           DC.B  '.W',0
+postmssg_L           DC.B  '.L',0
 
 comma                DC.B  ',',0
 newline              DC.B  '',CR,LF,0
