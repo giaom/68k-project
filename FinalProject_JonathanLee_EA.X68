@@ -3,7 +3,6 @@
 * Written by : Jonathan Lee
 * Date       : 5/30/2023
 *------------------------------------------------------------
-* MESSAGE VARIABLES ******************************
 
 * ASCII values for respective characters
 ADDRESS         DC.B    $41
@@ -72,20 +71,19 @@ CHECK_XXXX:
 * <EA>
 * Description: Checks the MNEMONIC starting from 0XXX
 *
-* Precondition: MNEMONIC has been loaded
-*
-* Postcondition: Verified value for MNEMONIC
+* MNEMONIC has been loaded
+* Verified value for MNEMONIC
 CHECK_0XXX:
     CMPI.B  #$4, MNEMONIC									;Check if MNEMONIC is in $4
     BLT     CHECK_00XX										;If so it's in the 00XX group
     JMP     CHECK_01XX										;If not it's in 01XX
 
+
 * <EA>
 * Description: Checks the MNEMONIC starting from 1XXX
 *
-* Precondition: MNEMONIC has been loaded
-*
-* Postcondition: Verified value for MNEMONIC
+* MNEMONIC has been loaded
+* Verified value for MNEMONIC
 CHECK_1XXX:
     CMPI.B  #$8, MNEMONIC									;Check if MNEMONIC is $8
     BEQ     LOAD_1000										;If so load equivalent value into it
@@ -104,23 +102,23 @@ CHECK_1XXX:
     
     RTS														;Return to stack
 
+
 * <EA>
 * Description: Checks the MNEMONIC starting from 00XX
 *
-* Precondition: MNEMONIC is loaded
-*
-* Postcondition: Verified MNEMONIC value
+* MNEMONIC is loaded
+* Verified MNEMONIC value
 CHECK_00XX:
     CMPI.B  #$1, MNEMONIC									;Check if MNEMONIC is equal to $1
     BLT     LOAD_0000										;If so then it's 0000
     BGE     LOAD_00XX										;Otherwise it's 00XX
 
+
 * <EA>
 * Description: Checks the MNEMONIC starting from 01XX
 *
-* Precondition: MNEMONIC is loaded
-*
-* Postcondition: Verified value for MNEMONIC
+* MNEMONIC is loaded
+* Verified value for MNEMONIC
 CHECK_01XX:
     CMPI.B  #%0100, MNEMONIC									;Check if MNEMONIC is $4
     BEQ     LOAD_0100											;Load equivalent value
@@ -139,9 +137,8 @@ CHECK_01XX:
 * Registers used: Whether if it is ASd, LSd, or ROd, they all share the same
 *                 EA algorithm. D5 for calculation, A2 and A3 for returning from subbranches.
 *
-* Precondition: FIRST_3, SECOND_3, THIRD_3, FOURTH_3
-*
-* Postcondition: Identified which type of shift it is
+* FIRST_3, SECOND_3, THIRD_3, FOURTH_3
+* Identified which type of shift it is
 LOAD_1110:
             MOVEA.L #0, A2					
             MOVEA.L #0, A3
@@ -246,9 +243,8 @@ ASd_2_REG   MOVE.B  #%000, D3
 *                 share the same EA algorithm. D4 for the displacement, D5 for calculation,
 *                 D6 for checking the current opcode, A2 and A3 for returning from subbranches.
 *
-* Precondition: FIRST_3, SECOND_3, THIRD_3, FOURTH_3
-*
-* Postcondition: Determine if operand is BRA or Bcc, and loads EA values into G_BUFFER
+* FIRST_3, SECOND_3, THIRD_3, FOURTH_3
+* Determine if operand is BRA or Bcc, and loads EA values into G_BUFFER
 LOAD_0110:
             MOVEA.L #0, A2
             MOVEA.L #0, A3
@@ -352,9 +348,8 @@ BRA_WRD_BK2 JSR     LOAD_NEW_LINE
 *				  D1 for size calculation.
 *                 If ADD, basically recycling the algorithm for DIVS/OR
 *
-* Precondition: FIRST_3, SECOND_3, THIRD_3, FOURTH_3
-*
-* Postcondition: Determine if operand is ADD or ADDA, and loads EA values into G_BUFFER
+* FIRST_3, SECOND_3, THIRD_3, FOURTH_3
+* Determine if operand is ADD or ADDA, and loads EA values into G_BUFFER
 LOAD_1101:
             CMPI.B  #%011, SECOND_3
             BEQ     ADDA
@@ -391,9 +386,8 @@ ADDA_BACK   MOVE.B  THIRD_3, D3
 *
 * Registers used: Basically recycling the algorithm for DIVS/OR
 *
-* Precondition: MNEMONIC is 1001
-*
-* Postcondition: Goes to check if it's DIVS or OR
+* MNEMONIC is 1001
+* Goes to check if it's DIVS or OR
 LOAD_1100:
     JMP     LOAD_1000
     
@@ -402,9 +396,8 @@ LOAD_1100:
 *
 * Registers used: Basically recycling the algorithm for DIVS/OR
 *
-* Precondition: MNEMONIC is 1001
-*
-* Postcondition: Goes to check if it's DIVS or OR
+* MNEMONIC is 1001
+* Goes to check if it's DIVS or OR
 LOAD_1011:
     JMP     LOAD_1000
 
@@ -414,9 +407,8 @@ LOAD_1011:
 *
 * Registers used: Basically recycling the algorithm for DIVS/OR
 *
-* Precondition: MNEMONIC is 1001
-*
-* Postcondition: Goes to check if it's DIVS or OR
+*MNEMONIC is 1001
+*Goes to check if it's DIVS or OR
 LOAD_1001:
     JMP     LOAD_1000
 
@@ -426,9 +418,8 @@ LOAD_1001:
 *
 * Registers used: D3 for SRC/DST mod, D2 for SRC/DST reg, A3 to get back from the subbranch.
 *
-* Precondition: FIRST_3, SECOND_3, THIRD_3, FOURTH_3
-*
-* Postcondition:Determine if operand is DIVS or OR, and loads EA values into G_BUFFER
+* FIRST_3, SECOND_3, THIRD_3, FOURTH_3
+* Determine if operand is DIVS or OR, and loads EA values into G_BUFFER
 LOAD_1000:
             CLR.L   D3
             CLR.L   D2
@@ -522,9 +513,8 @@ DIVS_BACK   MOVE.B  THIRD_3, D3
 *
 * Registers used: D4 to load the data within the EA bits, and A2 to come back
 *
-* Precondition: FIRST_3, SECOND_3, THIRD_3, FOURTH_3
-*
-* Postcondition: Determine if operand is SUBQ, and loads EA values into G_BUFFER
+* FIRST_3, SECOND_3, THIRD_3, FOURTH_3
+* Determine if operand is SUBQ, and loads EA values into G_BUFFER
 LOAD_0101:
             CLR.L   D3
             CLR.L   D2
@@ -571,9 +561,8 @@ SUBQ_BACK   MOVE.B  THIRD_3, D3
 * Registers used: D3 for SRC/DST mod, D2 for SRC/DST reg, A3 to get back from the subbranch,
 *                 D5, D4 for BCLR, D6 for recognizing MOVEM
 *
-* Precondition: FIRST_3, SECOND_3, THIRD_3, FOURTH_3
-*
-* Postcondition: Determine if operand is NEG,RTS,JSR,MOVEM, or LEA,
+* FIRST_3, SECOND_3, THIRD_3, FOURTH_3
+* Determine if operand is NEG,RTS,JSR,MOVEM, or LEA,
 * and loads EA values into G_BUFFER
 LOAD_0100:
             CLR.L   D3
@@ -690,9 +679,8 @@ LEA_BACK    MOVE.B  THIRD_3, D3
 * Registers used: D3 for SRC/DST mod, D2 for SRC/DST reg, A3 to get back from the subbranch,
 *                 D4, D5, and D6 for calculations
 *
-* Precondition: FIRST_3, SECOND_3, THIRD_3, FOURTH_3
-*
-* Postcondition: MOVEM decoding has been successful
+* FIRST_3, SECOND_3, THIRD_3, FOURTH_3
+* MOVEM decoding has been successful
 RUN_MOVEM:
 			CLR.L	D4
 			CLR.L	D5
@@ -808,9 +796,8 @@ MOVEM_PRE_B	CMPI.B	#%000, THIRD_3
 * Registers used: D3 for SRC/DST mod, D2 for SRC/DST reg, A3 to get back from the subbranch,
 *                 D4 for calculations.
 *
-* Precondition: FIRST_3, SECOND_3, THIRD_3, FOURTH_3
-*
-* Postcondition: RUN_MOVEM is able to decode MOVEM
+* FIRST_3, SECOND_3, THIRD_3, FOURTH_3
+* RUN_MOVEM is able to decode MOVEM
 MOVEM_PARSE:
 			CLR.L	D4
 			MOVE.W	(A5)+, D4 * D4 has $00FF
@@ -993,9 +980,8 @@ KEEP_GOING2	CMPI.B	#$FF, MOVEM_SECOND_VAR_COUNTER
 * Registers used: D3 for SRC/DST mod, D2 for SRC/DST reg, A3 to get back from the subbranch,
 *                 D5, D4 for BCLR
 *
-* Precondition: FIRST_3, SECOND_3, THIRD_3, FOURTH_3
-*
-* Postcondition: Determine if operand is BCLR,CMPI,ORI,Dynamic BCLR
+* FIRST_3, SECOND_3, THIRD_3, FOURTH_3
+* Determine if operand is BCLR,CMPI,ORI,Dynamic BCLR
 * and loads EA values into G_BUFFER
 LOAD_0000:
             CLR.L   D3
@@ -1120,9 +1106,9 @@ BACK5       MOVE.B  THIRD_3, D3
 *
 * Registers used: D3 for SRC/DST mod, D2 for SRC/DST reg, A3 to get back from the subbranch
 *
-* Precondition: FIRST_3, SECOND_3, THIRD_3, FOURTH_3
+* FIRST_3, SECOND_3, THIRD_3, FOURTH_3
 *
-* Postcondition: MOVE or MOVEA is identified and decoded for EA
+* MOVE or MOVEA is identified and decoded for EA
 LOAD_00XX:
         CLR.L   D3
         CLR.L   D2
@@ -1163,9 +1149,8 @@ GOO2    MOVE.B  SECOND_3, D3
 *
 * Registers used: A2 for branching back from subbranches
 *
-* Precondition: D3 for SRC/DST mod
-*
-* Postcondition: SRC or DST modes have been initialized
+* D3 for SRC/DST mod
+* SRC or DST modes have been initialized
 LOAD_EA:
         MOVEA.W #SAVED, A2 * remember to come back!
 
@@ -1181,9 +1166,8 @@ SAVED   RTS
 *
 * Registers used: X
 *
-* Precondition: D3 for SRC/DST mod
-*
-* Postcondition: SRC or DST modes have been initialized for non immediate values
+* D3 for SRC/DST mod
+* SRC or DST modes have been initialized for non immediate values
 LOAD_LT_111:
     CMPI    #%000, D3 * e.g. D3
     BEQ     LOAD_DATA_REGISTER
@@ -1204,9 +1188,8 @@ LOAD_LT_111:
 *
 * Registers used: D5 for SUB.W, D4 for immediate/address value extraction
 *
-* Precondition: A5 for START_ADDRESS iteration, TRAILING_SIZE for size of the immediate/address value
-*
-* Postcondition: IS_INVALID flag set if EA bit not valid
+* A5 for START_ADDRESS iteration, TRAILING_SIZE for size of the immediate/address value
+* IS_INVALID flag set if EA bit not valid
 LOAD_GE_111:
             CLR.L   D5
             CLR.L   D4
@@ -1247,9 +1230,8 @@ GO          CMPI    #%000, D2
 *
 * Registers used: A3
 *
-* Precondition: Immediate value exists
-*
-* Postcondition: Set up TRAILING_SIZE
+* Immediate value exists
+* Set up TRAILING_SIZE
 TRAILING_HELPER:            
 SIZE_B  MOVE.W  #$2, TRAILING_SIZE
         JMP     (A3)
@@ -1268,9 +1250,8 @@ SIZE_L  MOVE.W  #$4, TRAILING_SIZE
 *
 * Registers used: D0 for actually loading
 *
-* Precondition: D2 for SRC/DST reg
-*
-* Postcondition: Loads ASCII for G_BUFFER data register
+* D2 for SRC/DST reg
+* Loads ASCII for G_BUFFER data register
 LOAD_DATA_REGISTER:
     CLR.L   D0
     
@@ -1285,9 +1266,8 @@ LOAD_DATA_REGISTER:
 *
 * Registers used: D0 for actually loading
 *
-* Precondition: D2 for SRC/DST reg
-*
-* Postcondition: Loads ASCII for G_BUFFER addres register
+* D2 for SRC/DST reg
+* Loads ASCII for G_BUFFER addres register
 LOAD_ADDR_REGISTER:
     CLR.L   D0
 
@@ -1302,9 +1282,8 @@ LOAD_ADDR_REGISTER:
 *
 * Registers used: A2
 *
-* Precondition: Operand has been identified
-*
-* Postcondition: Regular address register has been loaded for the buffer
+* Operand has been identified
+* Regular address register has been loaded for the buffer
 LOAD_ADDRESS:
     JSR     LOAD_PTHSIS_OPEN
     JSR     LOAD_ADDR_REGISTER
@@ -1317,9 +1296,8 @@ LOAD_ADDRESS:
 *
 * Registers used: A2
 *
-* Precondition: Operand has been identified
-*
-* Postcondition: Post increment address register has been loaded for the buffer
+* Operand has been identified
+* Post increment address register has been loaded for the buffer
 LOAD_ADDRESS_W_POST_INC:
     JSR     LOAD_ADDRESS
     JSR     LOAD_PLUS_SIGN
@@ -1331,9 +1309,8 @@ LOAD_ADDRESS_W_POST_INC:
 *
 * Registers used: A2
 *
-* Precondition: Operand has been identified
-*
-* Postcondition: Post decrement address register has been loaded for the buffer
+* Operand has been identified
+* Post decrement address register has been loaded for the buffer
 LOAD_ADDRESS_W_PRE_DEC:
     JSR     LOAD_MINUS_SIGN
     JSR     LOAD_ADDRESS
@@ -1345,9 +1322,8 @@ LOAD_ADDRESS_W_PRE_DEC:
 *
 * Registers used: D0 for actually loading
 *
-* Precondition: D4 for immediate/address value  
-*
-* Postcondition: ABS Short value has been loaded in G_BUFFER
+* D4 for immediate/address value  
+* ABS Short value has been loaded in G_BUFFER
 LOAD_ABS_SHORT:
     CLR.L   D0
 
@@ -1362,9 +1338,8 @@ LOAD_ABS_SHORT:
 *
 * Registers used: D0 for actually loading
 *
-* Precondition: D4 for immediate/address value  
-*
-* Postcondition: ABS_LONG value has been loaded in G_BUFFER
+* D4 for immediate/address value  
+* ABS_LONG value has been loaded in G_BUFFER
 LOAD_ABS_LONG:
     CLR.L   D0
 
@@ -1379,9 +1354,8 @@ LOAD_ABS_LONG:
 *
 * Registers used: None
 *
-* Precondition: Immediate value found
-*
-* Postcondition: Immediate value is loaded in G_BUFFER
+* Immediate value found
+* Immediate value is loaded in G_BUFFER
 LOAD_IMMDTE:
     JSR     LOAD_IMMDTE_VALU
     JMP     LOAD_ABS_LONG
@@ -1394,9 +1368,8 @@ LOAD_IMMDTE:
 *
 * Registers used: D5 for the loop counter, D1 for loop assist
 *
-* Precondition: D0 for the immediate/address value  
-*
-* Postcondition: Loads the hex value into G_BUFFER for immediate
+* D0 for the immediate/address value  
+* Loads the hex value into G_BUFFER for immediate
 LOAD_BYTES:
         CLR.L   D5
         CLR.L   D1
@@ -1420,10 +1393,8 @@ ROTATE  ROL.L   #$04, D1
 *
 * Registers used: D0 for actually loading
 *
-* Precondition: CR, LF 
-*
-* Postcondition: NEW LINE has been loaded.
-*
+* CR, LF 
+* NEW LINE has been loaded.
 * This routine has been depreciated as IO defines newlines.
 LOAD_NEW_LINE:
     RTS
@@ -1434,9 +1405,8 @@ LOAD_NEW_LINE:
 *
 * Registers used: D0 for actually loading
 *
-* Precondition: COMMA, SPACE
-*
-* Postcondition: ',' and ' ' is loaded into G_BUFFER
+* COMMA, SPACE
+* ',' and ' ' is loaded into G_BUFFER
 LOAD_COMMA_SPACE:
     CLR.L   D0
 
@@ -1453,9 +1423,8 @@ LOAD_COMMA_SPACE:
 *
 * Registers used: D0 for actually loading
 *
-* Precondition: DATA
-*
-* Postcondition: 'D' is loaded into G_BUFFER
+* DATA
+* 'D' is loaded into G_BUFFER
 LOAD_D:
     CLR.L   D0
 
@@ -1469,9 +1438,8 @@ LOAD_D:
 *
 * Registers used: D0 for actually loading
 *
-* Precondition: ADDRESS
-*
-* Postcondition: 'A' is loaded into G_BUFFER
+* ADDRESS
+* 'A' is loaded into G_BUFFER
 LOAD_A:
     CLR.L   D0
 
@@ -1485,9 +1453,8 @@ LOAD_A:
 *
 * Registers used: D0 for actually loading
 *
-* Precondition: PTHSIS_OPEN
-*
-* Postcondition: '(' is loaded into G_BUFFER
+* PTHSIS_OPEN
+* '(' is loaded into G_BUFFER
 LOAD_PTHSIS_OPEN:
     CLR.L   D0
 
@@ -1501,9 +1468,8 @@ LOAD_PTHSIS_OPEN:
 *
 * Registers used: D0 for actually loading
 *
-* Precondition: PTHSIS_CLSD
-*
-* Postcondition: ')' is loaded into G_BUFFER
+* PTHSIS_CLSD
+* ')' is loaded into G_BUFFER
 LOAD_PTHSIS_CLSD:
     CLR.L   D0
 
@@ -1517,9 +1483,8 @@ LOAD_PTHSIS_CLSD:
 *
 * Registers used: D0 for actually loading
 *
-* Precondition: HEX_SIGN
-*
-* Postcondition: '$' is loaded into G_BUFFER
+* HEX_SIGN
+* '$' is loaded into G_BUFFER
 LOAD_HEX_SIGN:
     CLR.L   D0
 
@@ -1533,9 +1498,8 @@ LOAD_HEX_SIGN:
 *
 * Registers used: D0 for actually loading
 *
-* Precondition: IMMDTE_VALU
-*
-* Postcondition: '#' is loaded into G_BUFFER
+* IMMDTE_VALU
+* '#' is loaded into G_BUFFER
 LOAD_IMMDTE_VALU:
     CLR.L   D0
 
@@ -1549,9 +1513,8 @@ LOAD_IMMDTE_VALU:
 *
 * Registers used: D0 for actually loading
 *
-* Precondition: PLUS_SIGN
-*
-* Postcondition: '+' is loaded into G_BUFFER
+* PLUS_SIGN
+* '+' is loaded into G_BUFFER
 LOAD_PLUS_SIGN:
     CLR.L   D0
 
@@ -1565,9 +1528,8 @@ LOAD_PLUS_SIGN:
 *
 * Registers used: D0 for actually loading
 *
-* Precondition: MINUS_SIGN
-*
-* Postcondition: '-' is loaded into G_BUFFER
+* MINUS_SIGN
+* '-' is loaded into G_BUFFER
 LOAD_MINUS_SIGN:
     CLR.L   D0
 
@@ -1583,9 +1545,8 @@ LOAD_MINUS_SIGN:
 *
 * Registers used: D0,A4
 *
-* Precondition: Some value is placed in D0 to load
-*
-* Postcondition: Loads value from D0 to G_BUFFER
+* Some value is placed in D0 to load
+* Loads value from D0 to G_BUFFER
 LOAD_THIS_THING:
     MOVE.B  D0, (A4)+										;Post-increment G_BUFFER and load value into it
     RTS														;Return to stack
@@ -1597,9 +1558,8 @@ LOAD_THIS_THING:
 *
 * Registers used: D0,A4
 *
-* Precondition: Value in D0 has been loaded to some value
-*
-* Postcondition: Converted D0 value to hex and move it to G_BUFFER
+* Value in D0 has been loaded to some value
+* Converted D0 value to hex and move it to G_BUFFER
 LOAD_NUM:
     CMPI.B  #$9, D0
     BGT     GT
@@ -1620,13 +1580,8 @@ END MOVE.B  D0, (A4)+
 *
 * Registers used: None
 *
-* Precondition: INVALID EA mode or OP has been found
-*
-* Postcondition: Sets IS_VALID to 0 and finishes routine
+* INVALID EA mode or OP has been found
+* Sets IS_VALID to 0 and finishes routine
 INVALID:
             MOVE.B  #%0, IS_VALID
             JMP     EXT
-*~Font name~Courier New~
-*~Font size~10~
-*~Tab type~1~
-*~Tab size~4~
