@@ -7,7 +7,32 @@
 *-----------------------------------------------------------
 
 
-TEST_SUB:   DC  $9405
+TEST_SUB:   DC  $D604
+            DC  $D60C
+            DC  $D614
+            DC  $D61C
+            DC  $D624
+            ;DC  $942D
+            ;DC  $1234
+            ;DC  $9435
+            ;DC  $1234
+            DC  $D638
+            DC  $1234
+            DC  $D639
+            DC  $1234
+            DC  $5678
+            ;DC  $D63C
+            DC  $D684
+            DC  $D794
+            DC  $D79C
+            DC  $D724
+            DC  $D738
+            DC  $1234
+            DC  $D739
+            DC  $1234
+            DC  $5678
+            
+            DC  $9405
             DC  $940D
             DC  $9415
             DC  $941D
@@ -21,24 +46,33 @@ TEST_SUB:   DC  $9405
             DC  $9439
             DC  $1234
             DC  $5678
-            DC  $943C
-            DC  $1234
-            DC  $943A
-            DC  $1234
-            DC  $943B
-            DC  $1200
+            ;DC  $943C
+            ;DC  $1234
+            ;DC  $943A
+            ;DC  $1234
+            ;DC  $943B
+            ;DC  $1200
             DC  $9485
-            DC  $9545
-            DC  $944D
+            ;DC  $9545 - illegal instruction
+            ;DC  $944D - illegal instruction
             DC  $9555
             DC  $955D
             DC  $9565
             DC  $9578
             DC  $1234
+            DC  $9579
+            DC  $1234
+            DC  $5678
             
       
 START:  ORG     $1000 
     MOVE    #0,D5       * Used to track print lines per page
+
+    ;SUB.W #$123,D2    
+    ;SUB.B $34(A5,D1),D2
+    ;SUB.B $34(A6,D7),D2
+    ;SUB.B $34(A5,D5),D2
+    ;SUB.B $34(A5,D1.W),D2
 
 ; Code
     BRA STARTADDR
@@ -811,7 +845,7 @@ CMPR_OP_KEY:
     CMP.B   #31, D7 
     BEQ     load_mssg_ADDW
     CMP.B   #32, D7 
-    BEQ     load_mssg_ADDB
+    BEQ     load_mssg_ADDL
     
     CMP.B   #33, D7
     BEQ     load_mssg_BGT
@@ -966,22 +1000,22 @@ load_mssg_ORL
      
 load_mssg_SUBB
      LEA     mssg22, A1
-     
-     CMP    #0,D3
-     ;BEQ    SUB_DN
-     
-     
-     
-     JMP     PRINT_OPCODE
+     MOVE.B  #14,D0      
+     TRAP    #15         * Displays Message
+     JMP     SUB_ADDRESSING
     
      
 load_mssg_SUBW
      LEA     mssg23, A1
-     JMP     PRINT_OPCODE
+     MOVE.B  #14,D0      
+     TRAP    #15         * Displays Message
+     JMP     SUB_ADDRESSING
      
 load_mssg_SUBL
      LEA     mssg24, A1
-     JMP     PRINT_OPCODE
+     MOVE.B  #14,D0      
+     TRAP    #15         * Displays Message
+     JMP     SUB_ADDRESSING
      
 load_mssg_ANDB
      LEA     mssg25, A1
@@ -1005,11 +1039,21 @@ load_mssg_ADDAW
      
 load_mssg_ADDB
      LEA     mssg30, A1
-     JMP     PRINT_OPCODE
+     MOVE.B  #14,D0      
+     TRAP    #15         * Displays Message
+     JMP     SUB_ADDRESSING
      
 load_mssg_ADDW
      LEA     mssg31, A1
-     JMP     PRINT_OPCODE
+     MOVE.B  #14,D0      
+     TRAP    #15         * Displays Message
+     JMP     SUB_ADDRESSING
+     
+load_mssg_ADDL
+     LEA     mssg31b, A1
+     MOVE.B  #14,D0      
+     TRAP    #15         * Displays Message
+     JMP     SUB_ADDRESSING
      
 load_mssg_BGT
      LEA     mssg32, A1
@@ -1134,24 +1178,33 @@ PRINT_OPCODE
     MOVE.B  #14,D0      
     TRAP    #15         * Displays Message
     
-    
+    JMP     DONE_LOAD
     
 SUB_ADDRESSING:
 
     MOVE.B  #$9,D1  ; print tab after opcode
     MOVE.B  #6,D0
     TRAP    #15
-    ; to-do: Print addressing mode
+
 
     ; move opmode into D2
     MOVE.W  (A5), D2
     LSR.W   #6,D2
     AND.W  #$7, D2
     
-    CMP.B   #8,D2
+    MOVE.L  #0,D4   ; signal that we are doing Dn - <ea> -> Dn case
+    CMP.B   #4,D2
     BLT     EA_REG
     
-    BRA DONE_LOAD
+    ; if we are here we do: <ea> - Dn -> <ea>
+    MOVE.L  #1,D4   ; signal that we are doing <ea> - Dn -> <ea> case
+    JSR     PRINT_DREG
+
+    LEA     comma, A1
+    MOVE.B  #14,D0
+    TRAP    #15
+    
+    ;BRA DONE_LOAD
     
 EA_REG:
     ; move mode into D3
@@ -1201,6 +1254,9 @@ PRINT_An:
 
     JSR     PRINT_EA
     
+    CMP     #1,D4       ; we're done if in <ea> - Dn -> <ea> mode
+    BEQ     DONE_LOAD
+    
     LEA     comma, A1
     MOVE.B  #14,D0
     TRAP    #15
@@ -1218,6 +1274,9 @@ PRINT_RAn:
     LEA     postmssg_p, A1
     MOVE.B  #14,D0
     TRAP    #15
+
+    CMP     #1,D4       ; we're done if in <ea> - Dn -> <ea> mode
+    BEQ     DONE_LOAD
     
     LEA     comma, A1
     MOVE.B  #14,D0
@@ -1237,6 +1296,9 @@ PRINT_RAnI:
     MOVE.B  #14,D0
     TRAP    #15
     
+    CMP     #1,D4       ; we're done if in <ea> - Dn -> <ea> mode
+    BEQ     DONE_LOAD
+    
     LEA     comma, A1
     MOVE.B  #14,D0
     TRAP    #15
@@ -1254,6 +1316,9 @@ PRINT_RAnD:
     LEA     postmssg_p, A1
     MOVE.B  #14,D0
     TRAP    #15
+    
+    CMP     #1,D4       ; we're done if in <ea> - Dn -> <ea> mode
+    BEQ     DONE_LOAD
     
     LEA     comma, A1
     MOVE.B  #14,D0
@@ -1294,12 +1359,16 @@ POST_WORD_XXX:
     MOVE.L   A3, A1
     MOVE.B  #14,D0
     TRAP    #15
+
+    CMP     #1,D4       ; we're done if in <ea> - Dn -> <ea> mode
+    BEQ     POST_WORD_DONE
     
     LEA     comma, A1
     MOVE.B  #14,D0
     TRAP    #15
     
     JSR     PRINT_DREG
+POST_WORD_DONE:
     ADD     D3, A5
     BRA     DONE_LOAD
 
@@ -1410,6 +1479,7 @@ mssg28 DC.B   '     ADDA.L',0
 mssg29 DC.B   '     ADDA.W',0
 mssg30 DC.B   '     ADD.B',0
 mssg31 DC.B   '     ADD.W',0
+mssg31b DC.B   '     ADD.L',0
 mssg32 DC.B   '     BGT',0
 mssg33 DC.B   '     BLE',0
 mssg34 DC.B   '     BRA',0
