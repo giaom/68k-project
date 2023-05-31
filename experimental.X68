@@ -7,7 +7,35 @@
 *-----------------------------------------------------------
 
 
-TEST_SUB:   DC  $D604
+TEST_SUB:
+            DC  $5A04
+            DC  $5A1C
+            DC  $5A44
+            DC  $5A4C
+            DC  $5A5C
+            DC  $5A84
+            DC  $5A8C
+            DC  $5A9C
+
+            DC  $D6C4
+            DC  $D6CC
+            DC  $D6D4
+            DC  $D6DC
+            DC  $D6E4
+            DC  $D6F8
+            DC  $1234
+            DC  $D6F9
+            DC  $1234
+            DC  $5678
+            DC  $D7C4
+            DC  $D7CC
+            DC  $D7F8
+            DC  $1234
+            DC  $D7F9
+            DC  $1234
+            DC  $5678
+            
+            DC  $D604
             DC  $D60C
             DC  $D614
             DC  $D61C
@@ -67,12 +95,6 @@ TEST_SUB:   DC  $D604
       
 START:  ORG     $1000 
     MOVE    #0,D5       * Used to track print lines per page
-
-    ;SUB.W #$123,D2    
-    ;SUB.B $34(A5,D1),D2
-    ;SUB.B $34(A6,D7),D2
-    ;SUB.B $34(A5,D5),D2
-    ;SUB.B $34(A5,D1.W),D2
 
 ; Code
     BRA STARTADDR
@@ -756,6 +778,9 @@ OUTPUT:
 ; Need to use D0 and D2, so move variables
     MOVE.B  D0, D7 * Store op code key
     MOVE.B  D1, D6 * Store bool, does opcode have atleast 1 EA?
+    
+    ; we use D4 to signal ADDA changes or type of addressing we're doing
+    MOVE.L  #0,D4   ; signal that we are doing Dn - <ea> -> Dn case by default
 
 PRINT_MEM_LOC:
 ; print newline
@@ -972,15 +997,21 @@ load_mssg_MOVEMW
      
 load_mssg_ADDQW
      LEA     mssg15, A1
-     JMP     PRINT_OPCODE
+     MOVE.B  #14,D0      
+     TRAP    #15         * Displays Message
+     JMP     ADDQ_ADDRESSING
      
 load_mssg_ADDQL
      LEA     mssg16, A1
-     JMP     PRINT_OPCODE
+     MOVE.B  #14,D0      
+     TRAP    #15         * Displays Message
+     JMP     ADDQ_ADDRESSING
      
 load_mssg_ADDQB
      LEA     mssg17, A1
-     JMP     PRINT_OPCODE
+     MOVE.B  #14,D0      
+     TRAP    #15         * Displays Message
+     JMP     ADDQ_ADDRESSING
      
 load_mssg_MOVEQ
      LEA     mssg18, A1
@@ -1031,11 +1062,19 @@ load_mssg_ANDL
      
 load_mssg_ADDAL
      LEA     mssg28, A1
-     JMP     PRINT_OPCODE
+     MOVE.B  #14,D0      
+     TRAP    #15         * Displays Message
+     
+     MOVE.L  #2,D4   ; signal that we are doing ADDA not ADD
+     JMP     SUB_ADDRESSING
      
 load_mssg_ADDAW
      LEA     mssg29, A1
-     JMP     PRINT_OPCODE
+     MOVE.B  #14,D0      
+     TRAP    #15         * Displays Message
+     
+     MOVE.L  #2,D4   ; signal that we are doing ADDA not ADD
+     JMP     SUB_ADDRESSING
      
 load_mssg_ADDB
      LEA     mssg30, A1
@@ -1180,6 +1219,34 @@ PRINT_OPCODE
     
     JMP     DONE_LOAD
     
+ADDQ_ADDRESSING:
+    MOVE.B  #$9,D1  ; print tab after opcode
+    MOVE.B  #6,D0
+    TRAP    #15
+
+    LEA     premssg_tag, A1
+    MOVE.B  #14,D0
+    TRAP    #15
+
+    ; move data into D1
+    MOVE.W  (A5), D1
+    LSR.W   #8,D1
+    LSR.W   #1,D1
+    AND.W  #$7, D1
+    
+    MOVE.B  #3, D0
+    TRAP    #15
+    
+    LEA     comma, A1
+    MOVE.B  #14,D0
+    TRAP    #15
+    
+    MOVE.L  #1,D4
+    BRA EA_REG
+    
+    ; BRA DONE_LOAD
+
+    
 SUB_ADDRESSING:
 
     MOVE.B  #$9,D1  ; print tab after opcode
@@ -1192,7 +1259,11 @@ SUB_ADDRESSING:
     LSR.W   #6,D2
     AND.W  #$7, D2
     
-    MOVE.L  #0,D4   ; signal that we are doing Dn - <ea> -> Dn case
+    
+    CMP.B   #2,D4
+    BEQ     EA_REG
+    
+    ; remember that D4 is 0 by default: signal that we are doing Dn - <ea> -> Dn case
     CMP.B   #4,D2
     BLT     EA_REG
     
@@ -1238,6 +1309,9 @@ PRINT_Dn:
     TRAP    #15
 
     JSR     PRINT_EA
+    
+    CMP     #1,D4       ; we're done if in <ea> - Dn -> <ea> mode
+    BEQ     DONE_LOAD
     
     LEA     comma, A1
     MOVE.B  #14,D0
@@ -1380,6 +1454,16 @@ PRINT_EA:
     RTS
 
 PRINT_DREG:
+    ; hack alert, if D4 is 2 then we are doing ADDA, so we print A instead
+    CMP.B   #2,D4
+    BNE     PRINT_D
+    
+    MOVE.B  #$41,D1 ; print A
+    MOVE.B  #6,D0
+    TRAP    #15
+    JMP     PRINT_REG
+
+PRINT_D:
     MOVE.B  #$44,D1 ; print D
     MOVE.B  #6,D0
     TRAP    #15
