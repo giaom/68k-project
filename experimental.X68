@@ -8,6 +8,50 @@
 
 
 TEST_SUB:
+            ; AND commands
+            DC  $C847
+            ;DC  $C84F
+            DC  $C857
+            DC  $C85F
+            DC  $C867
+            DC  $C878
+            DC  $1234
+            DC  $C879
+            DC  $1234
+            DC  $5678
+            DC  $C907
+            DC  $C997
+            DC  $C99F
+            DC  $C9A7
+            DC  $C9B8
+            DC  $1234
+            DC  $C9B9
+            DC  $1234
+            DC  $5678
+
+            ; OR commands
+            DC  $8807
+            ;DC  $880F
+            DC  $8817
+            DC  $881F
+            DC  $8827
+            DC  $8838
+            DC  $1234
+            DC  $8839
+            DC  $1234
+            DC  $5678
+            DC  $8947
+            DC  $8957
+            DC  $895F
+            DC  $8967
+            DC  $8978
+            DC  $1234
+            DC  $8979
+            DC  $1234
+            DC  $5678
+            DC  $8987
+
+            ; ADDQ commands
             DC  $5A04
             DC  $5A1C
             DC  $5A44
@@ -17,6 +61,7 @@ TEST_SUB:
             DC  $5A8C
             DC  $5A9C
 
+            ; ADDA commands
             DC  $D6C4
             DC  $D6CC
             DC  $D6D4
@@ -35,6 +80,7 @@ TEST_SUB:
             DC  $1234
             DC  $5678
             
+            ; ADD commands
             DC  $D604
             DC  $D60C
             DC  $D614
@@ -59,7 +105,8 @@ TEST_SUB:
             DC  $D739
             DC  $1234
             DC  $5678
-            
+
+            ; SUB commands
             DC  $9405
             DC  $940D
             DC  $9415
@@ -1019,15 +1066,21 @@ load_mssg_MOVEQ
      
 load_mssg_ORB
      LEA     mssg19, A1
-     JMP     PRINT_OPCODE
+     MOVE.B  #14,D0      
+     TRAP    #15         * Displays Message
+     JMP     SUB_ADDRESSING
      
 load_mssg_ORW
      LEA     mssg20, A1
-     JMP     PRINT_OPCODE
+     MOVE.B  #14,D0      
+     TRAP    #15         * Displays Message
+     JMP     SUB_ADDRESSING
      
 load_mssg_ORL
      LEA     mssg21, A1
-     JMP     PRINT_OPCODE
+     MOVE.B  #14,D0      
+     TRAP    #15         * Displays Message
+     JMP     SUB_ADDRESSING
      
 load_mssg_SUBB
      LEA     mssg22, A1
@@ -1050,15 +1103,21 @@ load_mssg_SUBL
      
 load_mssg_ANDB
      LEA     mssg25, A1
-     JMP     PRINT_OPCODE
+     MOVE.B  #14,D0      
+     TRAP    #15         * Displays Message
+     JMP     SUB_ADDRESSING
      
 load_mssg_ANDW
      LEA     mssg26, A1
-     JMP     PRINT_OPCODE
+     MOVE.B  #14,D0      
+     TRAP    #15         * Displays Message
+     JMP     SUB_ADDRESSING
      
 load_mssg_ANDL
      LEA     mssg27, A1
-     JMP     PRINT_OPCODE
+     MOVE.B  #14,D0      
+     TRAP    #15         * Displays Message
+     JMP     SUB_ADDRESSING
      
 load_mssg_ADDAL
      LEA     mssg28, A1
