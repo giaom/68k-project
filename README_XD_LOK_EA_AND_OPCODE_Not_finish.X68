@@ -615,6 +615,7 @@ ASLB        MOVE.L      #61,D0
 
         
 code1111      BRA          data
+               
 
 data           MOVE.L      #0,D0
                MOVE.L      #0,D1
@@ -672,9 +673,182 @@ EA_DECODE
                BEQ        OR_AND_EA
                CMP        #25,D6
                BEQ        OR_AND_EA
-            
+               CMP        #22,D6
+               BEQ        SUB_ADD_EA
+               CMP        #23,D6
+               BEQ        SUB_ADD_EA
+               CMP        #24,D6
+               BEQ        SUB_ADD_EA
+               CMP        #30,D6
+               BEQ        SUB_ADD_EA
+               CMP        #31,D6
+               BEQ        SUB_ADD_EA
+               CMP        #32,D6
+               BEQ        SUB_ADD_EA
+               CMP        #28,D6
+               BEQ        ADDA_EA
+               CMP        #29,D6
+               BEQ        ADDA_EA
+               CMP        #33,D6
+               BEQ        BCC_EA
+               CMP        #34,D6
+               BEQ        BCC_EA
+               CMP        #35,D6
+               BEQ        BCC_EA
+               
+BCC_EA         MOVE.W     (A5),D1
+               AND        #$000000FF,D1
+               CMP        #$FF,D1
+               BEQ        BCC_EA_32_BITS
+               CMP        #$00,D1
+               BEQ        BCC_EA_16_BITS
+               EXT.W      D1
+               EXT.L      D1
+               MOVE.L     A5,D2
+               ADD.L      D2,D1
+               ADD.L      #2,D1
+               
+BCC_EA_PRINT   
+               LEA        premssg_hex,A1
+               MOVE.L     #14,D0
+               TRAP       #15
+               MOVE.L     #15,D0
+               MOVE.L     #16,D2
+               TRAP       #15
+               JMP        EA_RETURN
+BCC_EA_32_BITS               
+              ADD.L     #2,A4
+              MOVE.L    (A4),D1
+              MOVE.L     A5,D2
+              ADD.L     D2,D1
+              ADD.L    #2,D1
+              ADD.L     #6,D7
+              BRA       BCC_EA_PRINT
+
+BCC_EA_16_BITS
+              MOVE.W    (A4),D1
+              MOVE.L    A5,D2
+              EXT.L      D1
+              ADD.L     D2,D1
+              ADD.L     #2,D1
+              ADD.L     #2,D7
+              BRA       BCC_EA_PRINT    
+              
+         
+ADDA_EA        MOVE.W     (A5),D1
+               AND        #$0000003F,D1
+               JSR        CHECK_VAILD
+               CMP        #1,D3
+               BEQ        Print_Invaild
+               MOVE.W     (A5),D1
+               BTST       #8,D1
+               BEQ        ADDA_EA_W
+               MOVE.L     #2,D3
+               BRA        ADDA_EA_PRINT
+               
+ADDA_EA_PRINT
+              MOVE.W    (A5),D1
+              AND        #$0000003F,D1
+              JSR        EA_PRINT_TABLE
+              LEA        comma,A1
+              MOVE.L     #14,D0
+              TRAP       #15
+              MOVE.W      (A5),D1
+              LSR         #8,D1
+              LSR         #1,D1
+              AND         #$00000007,D1
+              ADD         #$8,D1
+              JSR         EA_PRINT_TABLE
+              JMP         EA_RETURN    
+ 
+ADDA_EA_W
+               MOVE.L    #1,D3
+               BRA       ADDA_EA_PRINT
+               
+SUB_ADD_EA     MOVE.W     (A5),D1
+               BTST       #8,D1
+               BNE        SUB_ADD_EA_AS_DESTINATION
+               MOVE.W     (A5),D1     ;EA AS SOURCE(SIZE MATTER)
+               AND        #$0000003F,D1
+               JSR        CHECK_VAILD
+               CMP        #1,D3
+               BEQ        Print_Invaild
+               MOVE.W     (A5),D1
+               BTST       #7,D1
+               BEQ        SUB_ADD_EA_B_OR_W
+               
+SUB_ADD_EA_CHECK_SIZE
+               MOVE.W     (A5),D1
+               BTST       #7,D1
+               BNE        SUB_ADD_EA_LONG_SIZE
+               BTST       #6,D1
+               BNE        SUB_ADD_EA_WORD_SIZE
+               MOVE.L     #0,D3
+               
+SUB_ADD_EA_SOURCE_PRINT
+               MOVE.W     (A5),D1
+               AND        #$0000003F,D1               
+               JSR        EA_PRINT_TABLE
+               LEA        comma,A1
+               MOVE.L     #14,D0
+               TRAP       #15
+               MOVE.W     (A5),D1
+               LSR        #8,D1
+               LSR        #1,D1
+               AND        #$00000007,D1
+               JSR        EA_PRINT_TABLE
+               JMP        EA_RETURN    
+
+SUB_ADD_EA_LONG_SIZE               
+               MOVE.L     #2,D3
+               BRA        SUB_ADD_EA_SOURCE_PRINT
+SUB_ADD_EA_WORD_SIZE
+               MOVE.L     #1,D3
+               BRA        SUB_ADD_EA_SOURCE_PRINT
+SUB_ADD_EA_B_OR_W
+               BTST       #6,D1
+               BEQ        SUB_ADD_EA_CHECK_ADDRESS
+               BRA        SUB_ADD_EA_CHECK_SIZE
+               
+SUB_ADD_EA_CHECK_ADDRESS
+               MOVE.W   (A5),D1
+               LSR      #3,D1
+               AND      #$00000007,D1
+               CMP      #1,D1
+               BEQ      Print_Invaild
+               BRA      SUB_ADD_EA_CHECK_SIZE   
+               
+SUB_ADD_EA_AS_DESTINATION
+              MOVE.W    (A5),D1
+              AND        #$0000003F,D1
+              CMP        #$3C,D1
+              BEQ        Print_Invaild
+              MOVE.W     (A5),D1
+              LSR        #3,D1
+              AND        #$00000007,D1
+              CMP        #0,D1
+              BEQ        Print_Invaild
+              CMP        #1,D1
+              BEQ        Print_Invaild
+              MOVE.W     (A5),D1
+              AND        #$0000003F,D1
+              JSR        CHECK_VAILD
+              CMP         #1,D3
+              BEQ         Print_INVAILD
+              MOVE.W      (A5),D1
+              LSR         #8,D1
+              LSR         #1,D1
+              AND        #$00000007,D1
+              JSR        EA_PRINT_TABLE
+              LEA        comma,A1
+              MOVE.L     #14,D0
+              TRAP       #15
+              MOVE.W     (A5),D1
+              AND        #$0000003F,D1
+              JSR        EA_PRINT_TABLE
+              JMP        EA_RETURN       
+
 OR_AND_EA      MOVE.W     (A5),D1
-               BTST        #8,D1
                LSR         #3,D1
                AND         #$00000003,D1
                CMP         #1,D1
@@ -705,11 +879,17 @@ OR_AND_EA      MOVE.W     (A5),D1
                JSR        EA_PRINT_TABLE
                JMP        EA_RETURN
                
-OR_AND_EA_AS_SOURCE
-               MOVE.W     (A5),D1
-               BTST        #10,D1
+OR_AND_EA_AS_SOURCE              
+               MOVE.W      (A5),D1
+               AND        #$0000003F,D1
+               JSR        CHECK_VAILD
+               CMP        #1,D3
+               BEQ        Print_Invaild
+               MOVE.W      (A5),D1
+               
+               BTST        #7,D1
                BNE         OR_AND_LONG_SIZE
-               BTST        #9,D1
+               BTST        #6,D1
                BEQ         OR_AND_BYTE_SIZE
                MOVE.L      #1,D3
                BRA         OR_AND_EA_AS_SOURCE_NEXT
@@ -720,14 +900,9 @@ OR_AND_LONG_SIZE
 
 OR_AND_BYTE_SIZE
                MOVE.L    #0,D3
-               BRA       OR_AND_EA_AS_SOURCE_NEXT    
+               BRA       OR_AND_EA_AS_SOURCE_NEXT
                
-OR_AND_EA_AS_SOURCE_NEXT
-               MOVE.W      (A5),D1
-               AND        #$0000003F,D1
-               JSR        CHECK_VAILD
-               CMP        #1,D3
-               BEQ        Print_Invaild
+OR_AND_EA_AS_SOURCE_NEXT                 
                MOVE.W     (A5),D1
                AND        #$0000003F,D1
                JSR        EA_PRINT_TABLE
@@ -1379,9 +1554,9 @@ CMPR_OP_KEY:
     CMP.B   #30, D6 
     BEQ     load_mssg_ADDB
     CMP.B   #31, D6 
-    BEQ     load_mssg_ADDW
+    BEQ     load_mssg_ADDL
     CMP.B   #32, D6 
-    BEQ     load_mssg_ADDB
+    BEQ     load_mssg_ADDW
     
     CMP.B   #33, D6 
     BEQ     load_mssg_BGT
@@ -1570,7 +1745,10 @@ load_mssg_ADDAW
 load_mssg_ADDB
      LEA     mssg30, A1
      JMP     PRINT_OPCODE
-     
+
+load_mssg_ADDL
+     LEA     mssg31b,A1
+     JMP     PRINT_OPCODE     
 load_mssg_ADDW
      LEA     mssg31, A1
      JMP     PRINT_OPCODE
@@ -1706,6 +1884,9 @@ PRINT_DATA
     MOVE.B  #14,D0
     TRAP    #15
     TRAP    #15
+    LEA     DATASTRING,A1
+    MOVE.B  #14,D0
+    TRAP    #15
     LEA     premssg_hex,A1
     MOVE.B  #14,D0
     TRAP    #15
@@ -1740,8 +1921,7 @@ prompt2  DC.B CR,LF,'Enter ending adress in hexadecimal: ',CR,LF,0
 examp    DC.B 'Input should be 8 digits. Put leading 0s on left if needed. ',CR,LF,0
 repeat   DC.B CR,LF,'Do you want to loop again? (Y/N): ',CR,LF,0
 
-DATASTRING  DC.B    'DATA ',0
-
+DATASTRING  DC.B    '     DATA',0
 mssg1 DC.B    '     MOVE.B',0
 mssg2 DC.B    '     MOVE.L',0
 mssg3 DC.B    '     MOVE.W',0
@@ -1773,6 +1953,7 @@ mssg28 DC.B   '     ADDA.L',0
 mssg29 DC.B   '     ADDA.W',0
 mssg30 DC.B   '     ADD.B',0
 mssg31 DC.B   '     ADD.W',0
+mssg31B DC.B   '     ADD.L',0
 mssg32 DC.B   '     BGT',0
 mssg33 DC.B   '     BLE',0
 mssg34 DC.B   '     BRA',0
@@ -1804,6 +1985,17 @@ mssg59  DC.B  '     ASL.W',0
 mssg60  DC.B  '     ASL.B',0
 
     END    START        
+
+
+
+
+
+
+
+
+
+
+
 
 
 
