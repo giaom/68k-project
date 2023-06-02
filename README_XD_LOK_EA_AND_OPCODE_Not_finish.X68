@@ -130,7 +130,6 @@ CHECK_END
 *-----------------------------------------------------------
 CR  EQU $0D
 LF  EQU $0A
-example          EQU      $123C00FF   *made up bits       
 shift            EQU     12                   *Shift 12 bits 
 *------------Use A0, d1,d0,d2,A2,A1
 DECODE
@@ -179,7 +178,7 @@ code0001       MOVE.B      #1,D0            ;MOVE.B
                JMP         DONE
 
 code0010       
-               MOVE.L   #example,D1    *Store that full 16 bits at d1 
+               MOVE.W   (A5),D1    *Store that full 16 bits at d1 
                BTST        #6,D1
                BEQ         MOVEL
                BTST        #7,D1
@@ -195,7 +194,7 @@ MOVEL          MOVE.L      #2,D0
                JMP         DONE
 
 code0011
-               MOVE.L   #example,D1    *Store that full 16 bits at d1 
+               MOVE.W   (A5),D1    *Store that full 16 bits at d1 
                BTST        #6,D1
                BEQ         MOVEW
                BTST        #7,D1
@@ -640,22 +639,280 @@ EA_DECODE
                CMP        #2,D6
                BEQ        MOVE_EA
                CMP        #4,D6
+               BEQ        MOVE_EA
+               CMP        #3,D6
+               BEQ        MOVEA_EA
+               CMP        #5,D6
+               BEQ        MOVEA_EA
+               CMP        #7,D6
+               BEQ        LEA_EA
+               CMP        #8,D6
+               BEQ        NOT_EA
+               CMP        #10,D6
+               BEQ        NOT_EA
+               CMP        #11,D6
+               BEQ        NOT_EA
+               CMP        #12,D6
+               BEQ        JSR_EA
+               CMP        #15,D6
+               BEQ        ADDQ_EA
+               CMP        #16,D6
+               BEQ        ADDQ_EA
+               CMP        #17,D6
+               BEQ        ADDQ_EA
+               CMP        #19,D6
+               BEQ        OR_AND_EA
+               CMP        #20,D6
+               BEQ        OR_AND_EA
+               CMP        #21,D6
+               BEQ        OR_AND_EA
+               CMP        #26,D6
+               BEQ        OR_AND_EA
+               CMP        #27,D6
+               BEQ        OR_AND_EA
+               CMP        #25,D6
+               BEQ        OR_AND_EA
+            
+OR_AND_EA      MOVE.W     (A5),D1
+               BTST        #8,D1
+               LSR         #3,D1
+               AND         #$00000003,D1
+               CMP         #1,D1
+               BEQ         Print_Invaild
+               
+               MOVE.W     (A5),D1
+               BTST        #8,D1
+               BEQ         OR_AND_EA_AS_SOURCE
+               MOVE.W      (A5),D1 ;OR_AND_EA_AS_DESTINATION
+               AND        #$0000003F,D1
+               CMP        #$3C,D1
+               BEQ        Print_Invaild
+               MOVE.W     (A5),D1
+               AND        #$0000003F,D1
+               JSR        CHECK_VAILD
+               CMP        #1,D3
+               BEQ        Print_Invaild
+               MOVE.W     (A5),D1
+               LSR        #8,D1
+               LSR        #1,D1
+               AND        #$00000007,D1
+               JSR        EA_PRINT_TABLE
+               LEA        comma,A1
+               MOVE.L     #14,D0
+               TRAP       #15
+               MOVE.W     (A5),D1
+               AND        #$0000003F,D1
+               JSR        EA_PRINT_TABLE
+               JMP        EA_RETURN
+               
+OR_AND_EA_AS_SOURCE
+               MOVE.W     (A5),D1
+               BTST        #10,D1
+               BNE         OR_AND_LONG_SIZE
+               BTST        #9,D1
+               BEQ         OR_AND_BYTE_SIZE
+               MOVE.L      #1,D3
+               BRA         OR_AND_EA_AS_SOURCE_NEXT
+               
+OR_AND_LONG_SIZE
+               MOVE.L   #2,D3
+               BRA      OR_AND_EA_AS_SOURCE_NEXT
+
+OR_AND_BYTE_SIZE
+               MOVE.L    #0,D3
+               BRA       OR_AND_EA_AS_SOURCE_NEXT    
+               
+OR_AND_EA_AS_SOURCE_NEXT
+               MOVE.W      (A5),D1
+               AND        #$0000003F,D1
+               JSR        CHECK_VAILD
+               CMP        #1,D3
+               BEQ        Print_Invaild
+               MOVE.W     (A5),D1
+               AND        #$0000003F,D1
+               JSR        EA_PRINT_TABLE
+               LEA        comma,A1
+               MOVE.L     #14,D0
+               TRAP       #15
+               MOVE.W     (A5),D1
+               LSR        #8,D1
+               LSR        #1,D1
+               AND        #$00000007,D1
+               JSR        EA_PRINT_TABLE
+               JMP        EA_RETURN
+               
+ADDQ_EA        MOVE.W     (A5),D1
+               LSR        #6,D1
+               AND        #$00000003,D1
+               CMP        #0,D1
+               BEQ        ADDQ_EA_B
+               BRA        ADDQ_NEXT
+               
+ADDQ_EA_B      MOVE.W     (A5),D1
+               AND        #$0000003F,D1
+               LSR        #3,D1
+               CMP        #1,D1
+               BEQ        Print_Invaild
+               BRA        ADDQ_NEXT
+ADDQ_NEXT
+               MOVE.W     (A5),D1
+               AND        #$0000003F,D1
+               CMP        #$3C,D1
+               BEQ        Print_Invaild
+               JSR        CHECK_VAILD
+               CMP        #1,D3
+               BEQ        Print_Invaild
+               LEA        premssg_tag,A1
+               MOVE.L     #14,D0
+               TRAP       #15
+               
+               MOVE.W     (A5),D1
+               LSR        #8,D1
+               LSR        #1,D1
+               AND        #$00000007,D1
+               MOVE.L     #3,D0
+               TRAP       #15
+               
+               LEA         comma,A1
+               MOVE.L      #14,D0           ;PRINT COMMA
+               TRAP        #15    
+               MOVE.W      (A5),D1
+               AND         #$0000003F,D1
+               JSR         EA_PRINT_TABLE
+               JMP         EA_RETURN
+               
+JSR_EA         MOVE.W     (A5),D1
+               AND        #$0000003F,D1
+               LSR        #3,D1
+               CMP        #2,D1
+               BEQ        JSR_EA_VAILD
+               CMP        #7,D1
+               BEQ        JSR_EA_VAILD
+               JMP        Print_Invaild
+               
+JSR_EA_VAILD   MOVE.W     (A5),D1
+               AND        #$0000003F,D1
+               CMP        #$3C,D1
+               BEQ        Print_Invaild
+               MOVE.W     (A5),D1
+               AND        #$0000003F,D1
+               JSR        CHECK_VAILD
+               CMP        #1,D3
+               BEQ        Print_Invaild
+               MOVE.W     (A5),D1
+               AND        #$0000003F,D1
+               JSR        EA_PRINT_TABLE
+               JMP        EA_RETURN        
+                
+               
+NOT_EA         MOVE.W     (A5),D1
+               AND        #$0000003F,D1
+               LSR        #3,D1
+               CMP        #1,D1
+               BEQ        Print_Invaild
+               MOVE.W     (A5),D1      
+               AND        #$0000003F,D1
+               CMP        #$3C,D1
+               BEQ        Print_Invaild
+               JSR        CHECK_VAILD
+               CMP        #1,D3
+               BEQ        Print_Invaild
+               
+               MOVE.W     (A5),D1
+               AND        #$0000003F,D1
+               JSR        EA_PRINT_TABLE
+               LEA        comma,A1
+               JMP        EA_RETURN
+               
+LEA_EA         MOVE.W     (A5),D1
+               AND        #$0000003F,D1
+               LSR        #3,D1
+               CMP        #2,D1
+               BEQ        LEA_VAILD
+               CMP        #7,D1  
+               BEQ        LEA_VAILD
+               BRA        Print_Invaild
+                     
+LEA_VAILD      MOVE.W     (A5),D1
+               AND        #$0000003F,D1
+               CMP        #$3C,D1
+               BEQ        Print_Invaild
+               MOVE.W     (A5),D1
+               AND        #$0000003F,D1        
+               JSR        CHECK_VAILD
+               CMP        #1,D3
+               BEQ        Print_Invaild
+               MOVE.W     (A5),D1
+               AND        #$0000003F,D1
+               JSR        EA_PRINT_TABLE
+               LEA        comma,A1
+               MOVE.L     #14,D0
+               TRAP       #15
+               MOVE.W     (A5),D1
+               LSR         #8,D1
+               LSR         #1,D1
+               AND        #$00000007,D1
+               ADD.B      #$8,D1
+               JSR        EA_PRINT_TABLE
+
+               JMP        EA_RETURN
+               
+MOVEA_EA       MOVE.W     (A5),D1
+               AND        #$0000003F,D1
+               JSR        CHECK_VAILD
+               CMP        #1,D3
+               BEQ        Print_Invaild
+               MOVE.W     (A5),D1
+               BTST       #12,D1
+               BNE        MOVEA_EA_W
+               MOVE.L     #2,D3
+               
+MOVEA_EA_PRINT               
+               AND        #$0000003F,D1         
+               JSR        EA_PRINT_TABLE
+               LEA        comma,A1
+               MOVE.L     #14,D0
+               TRAP       #15
+               MOVE.W     (A5),D1
+               LSR        #8,D1
+               LSR        #1,D1
+               AND        #$00000007,D1
+               ADD.B      #$8,D1
+               JSR        EA_PRINT_TABLE
+               JMP        EA_RETURN             
+         
+MOVEA_EA_W     MOVE.L     #1,D3
+               BRA        MOVEA_EA_PRINT
                
 MOVE_EA       
                MOVE.W     (A5),D1       ;Check if it is byte size operation
                BTST       #13,D1
-               BEQ        MOVE_B
-               BRA        MOVE_EA_NEXT
-
-MOVE_B         LSR        #3,D1
+               BEQ        MOVE_B_EA
+               BRA        MOVE_CHECK_IMMEDIATE
+MOVE_B_EA
+               LSR        #3,D1
                AND        #$00000007,D1
                CMP        #1,D1
                BEQ        Print_Invaild
+               BRA        MOVE_CHECK_IMMEDIATE
+               
+MOVE_CHECK_IMMEDIATE
                MOVE.W     (A5),D1
                LSR        #6,D1
                AND        #$00000007,D1         ;Check if any one of the address mode is address register
                CMP        #1,D1
                BEQ        Print_Invaild
+               MOVE.W     (A5),D1
+               MOVE.W     D1,D2             ;This part swap the order of the six bits in d1 so the mode is before the register number
+               AND        #$00000038,D2
+               LSR        #3,D2
+               AND        #$00000007,D1
+               LSL        #3,D1
+               ADD.L      D2,D1
+               CMP        #$3C,D1
+               BEQ        Print_Invaild
+               
+               
                MOVE.W     (A5),D1
                BRA        MOVE_EA_NEXT
                
@@ -676,7 +933,9 @@ MOVE_EA_NEXT   AND        #$0000003F,D1
                ADD.L      D2,D1
                JSR        CHECK_VAILD
                CMP        #1,D3
-               BEQ         Print_Invaild
+               BEQ         Print_Invaild ;need to check immediate as destination
+           
+               
                                             ;D3 NOW Uses as bool to determine the size of immediate data(if used)
                MOVE.W      (A5),D1
                BTST        #13,D1
@@ -764,6 +1023,7 @@ WRITE_NUMBER
                
                
 PRINT_Invaild   
+                MOVE.L  #2,D7
                 MOVE.L  #14,D0
                 LEA     INVALID_EA_MODES,A1
                 TRAP    #15
@@ -855,6 +1115,7 @@ Print_short   LEA       premssg_hex,A1  ;this is actually print_word
               ADD.L     #2,D7
               MOVE.W    (A4)+,D1
               AND       #$0000FFFF,D1       ;Clear the not nesscary bits
+              EXT.L     D1
               MOVE.B    #16,D2
               MOVE.L    #15,D0
               TRAP      #15
@@ -1215,7 +1476,7 @@ load_mssg_RTS
      JMP     PRINT_OPCODE
      
 load_mssg_LEA
-     LEA     mssg6, A1
+     LEA     mssg7, A1
      JMP     PRINT_OPCODE
      
 load_mssg_NOTL
@@ -1543,6 +1804,21 @@ mssg59  DC.B  '     ASL.W',0
 mssg60  DC.B  '     ASL.B',0
 
     END    START        
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
