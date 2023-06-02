@@ -85,7 +85,7 @@ Regular    ADD.L  D7,A5
 ; After every 10 prints, prompt user to press a key to continue printing
     ADD.B   #1,D5   * D5 used to track prints
     CMP     #10,D5
-    BLE     CHECK_END
+    BLT     CHECK_END
     
     ; Prompt for [Enter]
     MOVE.B  #0,D5
@@ -642,7 +642,24 @@ EA_DECODE
                CMP        #4,D6
                
 MOVE_EA       
-               AND        #$0000003F,D1         
+               MOVE.W     (A5),D1       ;Check if it is byte size operation
+               BTST       #13,D1
+               BEQ        MOVE_B
+               BRA        MOVE_EA_NEXT
+
+MOVE_B         LSR        #3,D1
+               AND        #$00000007,D1
+               CMP        #1,D1
+               BEQ        Print_Invaild
+               MOVE.W     (A5),D1
+               LSR        #6,D1
+               AND        #$00000007,D1         ;Check if any one of the address mode is address register
+               CMP        #1,D1
+               BEQ        Print_Invaild
+               MOVE.W     (A5),D1
+               BRA        MOVE_EA_NEXT
+               
+MOVE_EA_NEXT   AND        #$0000003F,D1         
                JSR        CHECK_VAILD
                CMP        #1,D3
                BEQ        Print_Invaild
@@ -660,8 +677,23 @@ MOVE_EA
                JSR        CHECK_VAILD
                CMP        #1,D3
                BEQ         Print_Invaild
+                                            ;D3 NOW Uses as bool to determine the size of immediate data(if used)
+               MOVE.W      (A5),D1
+               BTST        #13,D1
+               BEQ         SET_D3_TO_0      ;0 means it is byte size 
+               BTST        #12,D1           
+               BNE         SET_D3_TO_1      ;1 means it is word size
+               MOVE.L      #2,D3            ;2 means it is long size
+               BRA         MOVE_PRINTING  
+SET_D3_TO_0
+               MOVE.L       #0,D3
+               BRA          MOVE_PRINTING
                
+SET_D3_TO_1 
+            MOVE.L          #1,D3
+            BRA             MOVE_PRINTING
                
+MOVE_PRINTING               
                MOVE.W      (A5),D1
                AND        #$0000003F,D1
                JSR        EA_PRINT_TABLE    ;Print the source operand
@@ -679,7 +711,7 @@ MOVE_EA
                LSL        #3,D1
                ADD.L      D2,D1
                JSR        EA_PRINT_TABLE
-               JMP      EA_RETURN
+               JMP        EA_RETURN
                
                
                
@@ -777,18 +809,43 @@ EA_PRINT_TABLE          ;first 3 bits as mode, last 3 bits as register
               LEA       premssg_tag,A1
               MOVE.L    #14,D0
               TRAP      #15
+              CMP       #2,D3
+              BEQ       PRINT_LONG_IMMEDIATE
+              CMP       #1,D3
+              BEQ       PRINT_WORD_IMMEDIATE
+              ;Print WORD(byte) immediate data
               ADD.L     #2,D7
+              AND       #$000000000,D1
               MOVE.W    (A4)+,D1
+              EXT.W     D1
+              EXT.L     D1
               MOVE.L    #3,D0           ;Print the immediate data
               TRAP      #15
               JMP       PRINT_TABLE_EXIT
               
+PRINT_LONG_IMMEDIATE
+              ADD.L     #4,D7
+              MOVE.L    (A4)+,D1
+              MOVE.L     #3,D0
+              TRAP       #15
+              JMP       PRINT_TABLE_EXIT
+              
+PRINT_WORD_IMMEDIATE
+             ADD.L      #2,D7
+             AND       #$000000000,D1
+             MOVE.W     (A4)+,D1
+             EXT.L      D1
+             MOVE.L     #3,D0
+             TRAP       #15
+             JMP        PRINT_TABLE_EXIT
+             
 Print_long    LEA       premssg_hex,A1
               MOVE.L    #14,D0
               TRAP      #15
               ADD.L     #4,D7
               MOVE.L    (A4)+,D1
-              MOVE.L    #3,D0
+              MOVE.L    #16,D2
+              MOVE.L    #15,D0
               TRAP      #15
               JMP       PRINT_TABLE_EXIT
               
@@ -798,7 +855,8 @@ Print_short   LEA       premssg_hex,A1  ;this is actually print_word
               ADD.L     #2,D7
               MOVE.W    (A4)+,D1
               AND       #$0000FFFF,D1       ;Clear the not nesscary bits
-              MOVE.L    #3,D0
+              MOVE.B    #16,D2
+              MOVE.L    #15,D0
               TRAP      #15
               JMP       PRINT_TABLE_EXIT              
 Print_register 
@@ -811,6 +869,8 @@ Print_register
              CMP        #3,D1
              BEQ        Print_post_increment
              LEA        premssg_minus_pA,A1        ;pre decrement
+             MOVE.L     #14,D0
+             TRAP       #15
              AND.L      #$00000007,D2
              MOVE.L     D2,D1
              MOVE.L     #3,D0                      ;Print the register number
@@ -973,9 +1033,10 @@ PRINT_MEM_LOC:
     MOVE.B  #14,D0
     TRAP    #15
     TRAP    #15
-
+    
+    MOVE.L  #0,D1   ;CLEAR THE BITS
     MOVE.W  A5,D1
-    MOVE.B  #16,D2
+    MOVE.L  #16,D2
     MOVE.B  #15,D0
     TRAP    #15 
     
@@ -1375,6 +1436,7 @@ load_mssg_ASLB
 PRINT_OPCODE 
     MOVE.B  #14,D0      
     TRAP    #15         * Displays Message
+    RTS
 ; to-do: Print addressing mode
     
     
@@ -1481,6 +1543,15 @@ mssg59  DC.B  '     ASL.W',0
 mssg60  DC.B  '     ASL.B',0
 
     END    START        
+
+
+
+
+
+
+
+
+
 
 
 
