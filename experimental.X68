@@ -8,6 +8,43 @@
 
 
 TEST_SUB:
+            ; NOP
+            DC  $4E71
+
+            ; RTS
+            DC  $4E75
+            
+            ; ROR commands
+            DC  $E01D
+            DC  $E61D
+            DC  $E63D
+            DC  $E69D
+            DC  $E6BD
+            DC  $E6C5
+            DC  $E6D5
+            DC  $E6DD
+            DC  $E6E5
+            DC  $E6F8
+            DC  $1234
+            DC  $E6F9
+            DC  $1234
+            DC  $5678
+            
+            ; ROL commands
+            DC  $E11D
+            DC  $E71D
+            DC  $E73D
+            DC  $E79D
+            DC  $E7BD
+            DC  $E7C5
+            DC  $E7D5
+            DC  $E7E5
+            DC  $E7F8
+            DC  $1234
+            DC  $E7F9
+            DC  $1234
+            DC  $5678
+            
             ; AND commands
             DC  $C847
             ;DC  $C84F
@@ -1176,11 +1213,23 @@ load_mssg_BCC
      
 load_mssg_ROL
         LEA     mssg37, A1
-        JMP     PRINT_OPCODE
+        MOVE.B  #14,D0      
+        TRAP    #15         * Displays Message
+        
+        JMP     ROR_HANDLING
      
 load_mssg_ROR
         LEA     mssg38, A1
-        JMP     PRINT_OPCODE
+        MOVE.B  #14,D0      
+        TRAP    #15         * Displays Message
+        
+ROR_HANDLING:
+        MOVE.B  #$9,D1  ; print tab after opcode
+        MOVE.B  #6,D0
+        TRAP    #15
+        
+        MOVE.L  #1,D4
+        BRA EA_REG
      
 load_mssg_LSL
         LEA     mssg39, A1
@@ -1200,27 +1249,88 @@ load_mssg_ASL
      
 load_mssg_RORL
         LEA     mssg43, A1
-        JMP     PRINT_OPCODE
+        MOVE.B  #14,D0      
+        TRAP    #15         * Displays Message
+        JMP ROc_COMMON
      
 load_mssg_RORW
         LEA     mssg44, A1
-        JMP     PRINT_OPCODE
+        MOVE.B  #14,D0      
+        TRAP    #15         * Displays Message
+        JMP ROc_COMMON
      
 load_mssg_RORB
         LEA     mssg45, A1
-        JMP     PRINT_OPCODE
+        MOVE.B  #14,D0      
+        TRAP    #15         * Displays Message
+        JMP ROc_COMMON
      
 load_mssg_ROLL
         LEA     mssg46, A1
-        JMP     PRINT_OPCODE
+        MOVE.B  #14,D0      
+        TRAP    #15         * Displays Message
+        JMP ROc_COMMON
      
 load_mssg_ROLW
         LEA     mssg47, A1
-        JMP     PRINT_OPCODE
+        MOVE.B  #14,D0      
+        TRAP    #15         * Displays Message
+        JMP ROc_COMMON
      
 load_mssg_ROLB
         LEA     mssg48, A1
-        JMP     PRINT_OPCODE
+        MOVE.B  #14,D0      
+        TRAP    #15         * Displays Message
+
+ROc_COMMON:
+        MOVE.B  #$9,D1  ; print tab after opcode
+        MOVE.B  #6,D0
+        TRAP    #15
+    
+        ; move i/r to D2
+        MOVE.W  (A5), D2
+        LSR.W   #5,D2
+        AND.W   #$1,D2
+     
+        CMP     #0,D2
+        BEQ     IMMEDIATE_NUM
+
+        JSR     PRINT_DREG
+        JMP     AFTER_I_NUM
+        
+IMMEDIATE_NUM:
+
+        LEA     premssg_tag, A1
+        MOVE.B  #14,D0
+        TRAP    #15
+        
+        ; can't call PRINT_DREG as we have to convert 0 to 8
+        MOVE.L  #0,D1
+        MOVE.W  (A5), D1
+        LSR.W   #8, D1
+        LSR.W   #1, D1
+        AND.W   #7, D1
+        CMP     #0, D1
+        BNE     I_NUM_NOT_ZERO
+        
+        MOVE.B  #8, D1  ; if immediate num is 0, it implies 8
+        
+I_NUM_NOT_ZERO:
+        MOVE.B  #3, D0
+        TRAP    #15
+        
+        
+AFTER_I_NUM
+        LEA     comma, A1
+        MOVE.B  #14,D0
+        TRAP    #15
+    
+        MOVE.B  #$44,D1 ; print D
+        MOVE.B  #6,D0
+        TRAP    #15
+        JSR     PRINT_EA  
+
+        JMP     DONE_LOAD
      
 load_mssg_LSLL
         LEA     mssg49, A1
