@@ -8,6 +8,22 @@
 
 
 TEST_SUB:
+            ; JSR commands
+            DC  $4E92
+            DC  $4EB8
+            DC  $1234
+            DC  $4EB9
+            DC  $1234
+            DC  $5678
+            
+            ; LEA commands
+            DC  $43D5
+            DC  $43F8
+            DC  $1234
+            DC  $43F9
+            DC  $1234
+            DC  $5678
+
             ; NOP
             DC  $4E71
 
@@ -1048,8 +1064,27 @@ load_mssg_RTS
      JMP     PRINT_OPCODE
      
 load_mssg_LEA
-     LEA     mssg6, A1
-     JMP     PRINT_OPCODE
+     LEA     mssg7, A1
+     MOVE.B  #14,D0      
+     TRAP    #15         * Displays Message
+     
+    MOVE.B  #$9,D1  ; print tab after opcode
+    MOVE.B  #6,D0
+    TRAP    #15
+
+    ; move mode into D3
+    MOVE.W  (A5), D3
+    LSR.W   #3,D3
+    AND.W  #$7, D3  
+    
+    MOVE.B  #2,D4
+    CMP     #2, D3
+    BEQ     PRINT_RAn
+    
+    CMP     #7, D3
+    BEQ     PRINT_Rxxx
+    
+    BRA     DONE_LOAD
      
 load_mssg_NOTL
      LEA     mssg8, A1
@@ -1069,7 +1104,15 @@ load_mssg_NOTB
      
 load_mssg_JSR
      LEA     mssg12, A1
-     JMP     PRINT_OPCODE
+     MOVE.B  #14,D0      
+     TRAP    #15         * Displays Message
+     
+     MOVE.B  #$9,D1  ; print tab after opcode
+     MOVE.B  #6,D0
+     TRAP    #15
+        
+      MOVE.L  #1,D4
+      BRA EA_REG
      
 load_mssg_MOVEML
      LEA     mssg13, A1
@@ -1200,7 +1243,6 @@ load_mssg_BLE
      
 load_mssg_BRA
      LEA     mssg34, A1
-     JMP     PRINT_OPCODE
      JMP     PRINT_OPCODE
      
 load_mssg_BEQ
@@ -1417,17 +1459,14 @@ ADDQ_ADDRESSING:
 
     
 SUB_ADDRESSING:
-
     MOVE.B  #$9,D1  ; print tab after opcode
     MOVE.B  #6,D0
     TRAP    #15
 
-
     ; move opmode into D2
     MOVE.W  (A5), D2
     LSR.W   #6,D2
-    AND.W  #$7, D2
-    
+    AND.W  #$7, D2 
     
     CMP.B   #2,D4
     BEQ     EA_REG
@@ -1764,4 +1803,3 @@ mssg59  DC.B  '     ASL.W',0
 mssg60  DC.B  '     ASL.B',0
 
     END    START        
-
