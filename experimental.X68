@@ -8,6 +8,74 @@
 
 
 TEST_SUB:
+            ; BGT commands
+            DC  $6E05   
+            DC  $6E55   
+            DC  $6EAA
+            DC  $6EF0
+            DC  $6E00
+            DC  $1234
+            DC  $6EFF
+            DC  $1234
+            DC  $5678
+            DC  $6EFF
+            DC  $8765
+            DC  $4321
+            DC  $6E01
+            DC  $6E02
+            DC  $6E03
+            
+            ; BLE commands
+            DC  $6F05   
+            DC  $6F55   
+            DC  $6FAA
+            DC  $6FF0
+            DC  $6F00
+            DC  $1234
+            DC  $6FFF
+            DC  $1234
+            DC  $5678
+            DC  $6FFF
+            DC  $8765
+            DC  $4321
+            DC  $6F01
+            DC  $6F02
+            DC  $6F03
+            
+            ; BEQ commands
+            DC  $6705  
+            DC  $6755  
+            DC  $67AA
+            DC  $67F0
+            DC  $6700
+            DC  $1234
+            DC  $67FF
+            DC  $1234
+            DC  $5678
+            DC  $67FF
+            DC  $8765
+            DC  $4321
+            DC  $6701
+            DC  $6702
+            DC  $6703
+            
+            ; BRA commands
+            DC  $6005  
+            DC  $6055  
+            DC  $60AA
+            DC  $60F0
+            DC  $6000
+            DC  $1234
+            DC  $60FF
+            DC  $1234
+            DC  $5678
+            DC  $60FF
+            DC  $8765
+            DC  $4321
+            DC  $6001
+            DC  $6002
+            DC  $6003
+            
             ; JSR commands
             DC  $4E92   * JSR (A2)
             DC  $4EB8   * JSR $1234.W
@@ -195,7 +263,7 @@ TEST_SUB:
       
 START:  ORG     $1000 
     MOVE    #0,D5       * Used to track print lines per page
-
+    
 ; Code
     BRA STARTADDR
 
@@ -1227,40 +1295,100 @@ load_mssg_ADDW
      TRAP    #15         * Displays Message
      JMP     SUB_ADDRESSING
      
-load_mssg_ADDL
+load_mssg_ADDL:
      LEA     mssg31b, A1
      MOVE.B  #14,D0      
      TRAP    #15         * Displays Message
      JMP     SUB_ADDRESSING
      
-load_mssg_BGT
+load_mssg_BGT:
      LEA     mssg32, A1
-     JMP     PRINT_OPCODE
+     MOVE.B  #14,D0      
+     TRAP    #15  
      
-load_mssg_BLE
+     BRA    HANDLE_DISPLACEMENT
+     
+load_mssg_BLE:
      LEA     mssg33, A1
-     JMP     PRINT_OPCODE
+     MOVE.B  #14,D0      
+     TRAP    #15  
      
-load_mssg_BRA
+     BRA    HANDLE_DISPLACEMENT
+     
+load_mssg_BRA:
+    ; Display BRA
      LEA     mssg34, A1
-     JMP     PRINT_OPCODE
+     MOVE.B  #14,D0      
+     TRAP    #15  
      
-load_mssg_BEQ
-        LEA     mssg35, A1
-        JMP     PRINT_OPCODE
+HANDLE_DISPLACEMENT:
+     ; print tab after opcode
+     MOVE.B  #$9,D1  
+     MOVE.B  #6,D0
+     TRAP    #15
      
-load_mssg_BCC
-        LEA     mssg36, A1
-        JMP     PRINT_OPCODE
+     ; print $ 
+     LEA     premssg_hex, A1
+     MOVE.B  #14,D0
+     TRAP    #15
      
-load_mssg_ROL
+     MOVE.L A5,A4
+     ADD.L  #2,A4
+     
+     ; store displacement in D1
+    MOVE.W  (A5),D1
+    AND.W   #$FF, D1
+  
+    
+    CMP.B   #0, D1
+    BEQ     WORD_DISPLACEMENT
+    
+    CMP.B   #$FF, D1
+    BEQ     LONG_DISPLACEMENT
+    
+    BRA     POST_LONG_DISPLACEMENT
+    
+WORD_DISPLACEMENT:
+    MOVE.W  (A4),D1
+    ADD.L   #2,A5
+    BRA     POST_LONG_DISPLACEMENT
+    
+LONG_DISPLACEMENT:  
+    MOVE.L  (A4),D1
+    ADD.L   #4,A5
+    
+POST_LONG_DISPLACEMENT:
+    ADD.L   A4,D1
+    
+    ; prints number in hex
+    MOVE.B  #15, D0
+    MOVE.B  #16, D2
+    TRAP    #15
+    
+    JMP     DONE_LOAD 
+     
+load_mssg_BEQ:
+     LEA     mssg35, A1
+     MOVE.B  #14,D0      
+     TRAP    #15  
+     
+     BRA    HANDLE_DISPLACEMENT
+     
+load_mssg_BCC:
+     LEA     mssg36, A1
+     MOVE.B  #14,D0      
+     TRAP    #15  
+     
+     BRA    HANDLE_DISPLACEMENT
+     
+load_mssg_ROL:
         LEA     mssg37, A1
         MOVE.B  #14,D0      
         TRAP    #15         * Displays Message
         
         JMP     ROR_HANDLING
      
-load_mssg_ROR
+load_mssg_ROR:
         LEA     mssg38, A1
         MOVE.B  #14,D0      
         TRAP    #15         * Displays Message
@@ -1289,37 +1417,37 @@ load_mssg_ASL
         LEA     mssg42, A1
         JMP     PRINT_OPCODE
      
-load_mssg_RORL
+load_mssg_RORL:
         LEA     mssg43, A1
         MOVE.B  #14,D0      
         TRAP    #15         * Displays Message
         JMP ROc_COMMON
      
-load_mssg_RORW
+load_mssg_RORW:
         LEA     mssg44, A1
         MOVE.B  #14,D0      
         TRAP    #15         * Displays Message
         JMP ROc_COMMON
      
-load_mssg_RORB
+load_mssg_RORB:
         LEA     mssg45, A1
         MOVE.B  #14,D0      
         TRAP    #15         * Displays Message
         JMP ROc_COMMON
      
-load_mssg_ROLL
+load_mssg_ROLL:
         LEA     mssg46, A1
         MOVE.B  #14,D0      
         TRAP    #15         * Displays Message
         JMP ROc_COMMON
      
-load_mssg_ROLW
+load_mssg_ROLW:
         LEA     mssg47, A1
         MOVE.B  #14,D0      
         TRAP    #15         * Displays Message
         JMP ROc_COMMON
      
-load_mssg_ROLB
+load_mssg_ROLB:
         LEA     mssg48, A1
         MOVE.B  #14,D0      
         TRAP    #15         * Displays Message
@@ -1330,7 +1458,7 @@ ROc_COMMON:
         TRAP    #15
     
         ; move i/r to D2
-        MOVE.W  (A5), D2
+        MOVE.W  (A5),D2
         LSR.W   #5,D2
         AND.W   #$1,D2
      
@@ -1341,7 +1469,6 @@ ROc_COMMON:
         JMP     AFTER_I_NUM
         
 IMMEDIATE_NUM:
-
         LEA     premssg_tag, A1
         MOVE.B  #14,D0
         TRAP    #15
@@ -1359,10 +1486,9 @@ IMMEDIATE_NUM:
         
 I_NUM_NOT_ZERO:
         MOVE.B  #3, D0
-        TRAP    #15
+        TRAP    #15     
         
-        
-AFTER_I_NUM
+AFTER_I_NUM:
         LEA     comma, A1
         MOVE.B  #14,D0
         TRAP    #15
@@ -1374,57 +1500,57 @@ AFTER_I_NUM
 
         JMP     DONE_LOAD
      
-load_mssg_LSLL
+load_mssg_LSLL:
         LEA     mssg49, A1
         JMP     PRINT_OPCODE
      
-load_mssg_LSLW
+load_mssg_LSLW:
         LEA     mssg50, A1
         JMP     PRINT_OPCODE
      
-load_mssg_LSLB
+load_mssg_LSLB:
         LEA     mssg51, A1
         JMP     PRINT_OPCODE
      
-load_mssg_LSRL
+load_mssg_LSRL:
         LEA     mssg52, A1
         JMP     PRINT_OPCODE
      
-load_mssg_LSRW
+load_mssg_LSRW:
         LEA     mssg53, A1
         JMP     PRINT_OPCODE
      
-load_mssg_LSRB
+load_mssg_LSRB:
         LEA     mssg54, A1
         JMP     PRINT_OPCODE
      
-load_mssg_ASRL
+load_mssg_ASRL:
         LEA     mssg55, A1
         JMP     PRINT_OPCODE
      
-load_mssg_ASRW
+load_mssg_ASRW:
         LEA     mssg56, A1
         JMP     PRINT_OPCODE
      
-load_mssg_ASRB
+load_mssg_ASRB:
         LEA     mssg57, A1
         JMP     PRINT_OPCODE
      
-load_mssg_ASLL
+load_mssg_ASLL:
         LEA     mssg58, A1
         JMP     PRINT_OPCODE
      
-load_mssg_ASLW
+load_mssg_ASLW:
         LEA     mssg59, A1
         JMP     PRINT_OPCODE
      
-load_mssg_ASLB
+load_mssg_ASLB:
         LEA     mssg60, A1
         JMP     PRINT_OPCODE
 
 *-----[Load Mssg End]-----     
 
-PRINT_OPCODE 
+PRINT_OPCODE:
     MOVE.B  #14,D0      
     TRAP    #15         * Displays Message
     
@@ -1456,7 +1582,6 @@ ADDQ_ADDRESSING:
     BRA EA_REG
     
     ; BRA DONE_LOAD
-
     
 SUB_ADDRESSING:
     MOVE.B  #$9,D1  ; print tab after opcode
@@ -1610,11 +1735,13 @@ PRINT_RAnD:
     BRA     DONE_LOAD
 
 PRINT_Rxxx:
+    ; print $ 
     LEA     premssg_hex, A1
     MOVE.B  #14,D0
     TRAP    #15
 
-    MOVE.W  (A5), D2
+    ; store register in D2
+    MOVE.W  (A5),D2
     AND.W   #7, D2
     MOVE.L  A5, A4
     ADD     #2, A4
@@ -1624,14 +1751,14 @@ PRINT_Rxxx:
     
     MOVE.L  #4, D3
     LEA     postmssg_L, A3
-    MOVE.W  (A5), D2
-    MOVE.L (A4), D1
-    BRA POST_WORD_XXX
+    MOVE.W  (A5),D2
+    MOVE.L  (A4),D1
+    BRA     POST_WORD_XXX
     
 WORD_XXX:
     MOVE.L  #2, D3
-   LEA     postmssg_W, A3
-    MOVE.W  (A4), D1
+    LEA     postmssg_W, A3
+    MOVE.W  (A4),D1
     
 POST_WORD_XXX:    
     MOVE.B  #15, D0
@@ -1685,12 +1812,7 @@ PRINT_REG:
     TRAP    #15
     RTS
 
-
-DONE_LOAD ; place-holder
-    
-PRINT_OPERAND
-; to-do
-
+DONE_LOAD: 
 ; print newline
     LEA     newline, A1
     MOVE.B  #14,D0
