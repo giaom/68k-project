@@ -9,45 +9,45 @@
 
 TEST_SUB:
             ; JSR commands
-            DC  $4E92
-            DC  $4EB8
+            DC  $4E92   * JSR (A2)
+            DC  $4EB8   * JSR $1234.W
             DC  $1234
-            DC  $4EB9
+            DC  $4EB9   * JSR $12345678.L
             DC  $1234
             DC  $5678
             
             ; LEA commands
-            DC  $43D5
-            DC  $43F8
+            DC  $43D5   * LEA (A5),A1
+            DC  $43F8   * LEA $1234.W, A1
             DC  $1234
-            DC  $43F9
+            DC  $43F9   * LEA $12345678.L, A1
             DC  $1234
             DC  $5678
 
             ; NOP
-            DC  $4E71
+            DC  $4E71   * NOP
 
             ; RTS
-            DC  $4E75
+            DC  $4E75   * RTS
             
             ; ROR commands
-            DC  $E01D
-            DC  $E61D
-            DC  $E63D
-            DC  $E69D
-            DC  $E6BD
-            DC  $E6C5
-            DC  $E6D5
-            DC  $E6DD
-            DC  $E6E5
-            DC  $E6F8
+            DC  $E01D   * ROR.B #8,D5
+            DC  $E61D   * ROR.B #3,D5
+            DC  $E63D   * ROR.B D3,D5
+            DC  $E69D   * ROR.L #3,D5
+            DC  $E6BD   * ROR.L D3,D5
+            DC  $E6C5   * ROR D5
+            DC  $E6D5   * ROR (A5)
+            DC  $E6DD   * ROR (A5)+
+            DC  $E6E5   * ROR -(A5)
+            DC  $E6F8   * ROR $1234.W
             DC  $1234
-            DC  $E6F9
+            DC  $E6F9   * ROR $12345678.L
             DC  $1234
             DC  $5678
             
             ; ROL commands
-            DC  $E11D
+            DC  $E11D   * ROL.B #8,D5
             DC  $E71D
             DC  $E73D
             DC  $E79D
