@@ -743,6 +743,120 @@ EA_DECODE
                BEQ        REGISTER_SHIFT_EA
                CMP        #61,D6
                BEQ        REGISTER_SHIFT_EA
+               CMP        #13,D6
+               BEQ        MOVEM_EA
+               CMP        #14,D6
+               BEQ        MOVEM_EA
+               JMP        EA_RETURN
+               
+MOVEM_EA       MOVE.L     A4,A3         ;A3 STORES THE LOCATION OF THE MASK
+               ADD.L      #2,A4
+               ADD.L      #2,D7
+               MOVE.W     (A3),D1
+               CMP         #0,D1
+               BEQ         Print_Invaild
+               MOVE.W     (A5),D1
+               AND         #$0000003F,D1
+               CMP         #$3C,D1
+               BEQ         Print_Invaild
+               LSR         #3,D1
+               CMP         #0,D1
+               BEQ         Print_Invaild
+               CMP         #1,D1
+               BEQ         Print_Invaild
+               MOVE.W      (A5),D1
+               AND         #$0000003F,D1
+               JSR         CHECK_VAILD
+               CMP         #1,D3
+               BEQ         Print_Invaild
+               MOVE.W      (A5),D1
+               BTST        #10,D1
+               BEQ         MOVEM_EA_REGISTER_TO_M
+               MOVE.W      (A5),D1          ;Memory to register
+               AND         #$0000003F,D1               
+               LSR         #3,D1
+               CMP         #4,D1
+               BEQ         Print_Invaild
+               CMP         #3,D1
+               BEQ         MOVEM_EA_POST_INCREMNT
+               MOVE.W      (A5),D1
+               AND         #$0000003F,D1
+               JSR         EA_PRINT_TABLE
+               LEA         comma,A1
+               MOVE.L      #14,D0
+               TRAP        #15
+               JSR         MOVEA_PRINT_MASK
+               CMP         #1,D3
+               BEQ         Print_Invaild
+               JMP         EA_RETURN
+               
+MOVEM_EA_POST_INCREMNT
+               MOVE.W      (A5),D1
+               AND         #$0000003F,D1
+               JSR         EA_PRINT_TABLE
+               LEA         comma,A1
+               MOVE.L      #14,D0
+               TRAP        #15
+               JSR         MOVEA_PRINT_REVERSE_MASK
+               CMP         #1,D3
+               BEQ         Print_Invaild
+               JMP         EA_RETURN              
+     
+MOVEM_EA_REGISTER_TO_M
+               MOVE.W      (A5),D1
+               AND         #$0000003F,D1               
+               LSR         #3,D1
+               CMP         #3,D1
+               BEQ         Print_Invaild
+               JSR         MOVEA_PRINT_MASK
+               CMP         #1,D3
+               BEQ         Print_Invaild
+               LEA         comma,A1
+               MOVE.L      #14,D0
+               TRAP        #15
+               MOVE.W      (A5),D1
+               AND         #$0000003F,D1
+               JSR         EA_PRINT_TABLE
+               JMP         EA_RETURN
+               
+
+MOVEA_PRINT_MASK
+               MOVE.W     (A3),D3
+               MOVE        #15,D2
+               LSR         #8,D3
+               CMP         #0,D3
+               BEQ         D_LOOP
+               MOVE.W      (A3),D3
+               
+A_FIRST_REGISTER
+               BTST         D2,D3
+               BNE          PRINT_A_FIRST_R
+               ADD          #-1,D2
+               BRA          A_FIRST_REGISTER
+               
+PRINT_A_FIRST_R
+              LEA           premssg_A,A1
+              MOVE.L        #14,D0
+              TRAP          #15
+              MOVE.L        D2,D1
+              ADD.L         #-1,D2
+              ADD.L         #-8,D1
+              MOVE.L        #3,D1
+              TRAP          #15
+              
+              CMP           #8,D2
+              BEQ           CHECK_D_LOOP
+              
+
+              
+CHECK_D_LOOP
+
+MOVEA_PRINT_MASK_END
+               RTS
+               
+MOVEA_PRINT_REVERSE_MASK
+
+               RTS      
                
 REGISTER_SHIFT_EA
                MOVE.W     (A5),D1
@@ -1541,8 +1655,9 @@ premssg_D            DC.B  'D',0
 premssg_p            DC.B  '(',0
 premssg_pA           DC.B  '(A',0
 premssg_minus_pA     DC.B  '-(A',0
-
-; post
+negative_sign        DC.B   '-',0
+slash                DC.B   '/',0
+; post             
 postmssg_astr        DC.B  '*',CR,LF,0
 postmssg_p_plus      DC.B  ')+',0
 postmssg_p           DC.B  ')',0
@@ -2085,6 +2200,10 @@ mssg59  DC.B  '     ASL.W',0
 mssg60  DC.B  '     ASL.B',0
 
     END    START        
+
+
+
+
 
 
 

@@ -317,12 +317,86 @@ START:                  ; first instruction of program
     BEQ     $4000
     BLE     $3500
     BGT     $D000
-    
+    ;ROL Memory shift
+    ROL     (A1)
+    ROL     -(A1)
+    ROL     (A4)+
+    ROL     $1234
+    ROL     $12345678
+    ;ROR Memory shift
+    ROR     (A1)
+    ROR     -(A1)
+    ROR     (A4)+
+    ROR     $1234
+    ROR     $12345678    
+    ;LSL Memory shift
+    LSL     (A1)
+    LSL     -(A1)
+    LSL     (A4)+
+    LSL     $1234
+    LSL     $12345678  
+    ;LSR Memory shift
+    LSR     (A1)
+    LSR     -(A1)
+    LSR     (A4)+
+    LSR     $1234
+    LSR     $12345678
+    ;ASR Memory shift
+    ASR     (A1)
+    ASR     -(A1)
+    ASR     (A4)+
+    ASR     $1234
+    ASR     $12345678
+    ;ASL Memory shift
+    ASL     (A1)
+    ASL     -(A1)
+    ASL     (A4)+
+    ASL     $1234
+    ASL     $12345678
+    ;ROL REGISTER shift
+    ROL     #2,D1
+    ROL     D1,D2
+    ;ROR REGISTER shift
+    ROR     #2,D1
+    ROR     D1,D2
+    ;LSL REGISTER shift
+    LSL     #2,D1
+    LSL     D1,D2
+    ;LSR REGISTER shift
+    LSR     #2,D1
+    LSR     D1,D2
+    ;ASL REGISTER shift
+    ASL     #2,D1
+    ASL     D1,D2
+    ;ASR REGISTER shift
+    ASR     #2,D1
+    ASR     D1,D2
+    ;MOVEM
+    MOVEM.W   D1/D3/D4-D5/A1-A5,(A1)
+    MOVEM.W   D2-D3/D4-D5/A1-A5,$1234
+    MOVEM.W   D1/D3/D4-D5/A1-A5,$12345678
+    MOVEM.W   D1/D3/D4-D5/A1-A5,-(A1)
+    MOVEM.L   D1/D3/D4-D5/A1-A5,-(A1)  
+    MOVEM.L   D1/D3/D4-D5/A1-A5,(A1)
+    MOVEM.L   D2-D3/D4-D5/A1-A5,$1234
+    MOVEM.L   D1/D3/D4-D5/A1-A5,$12345678
+    MOVEM.W   (A1),D1/D3/D4-D5/A1-A5
+    MOVEM.W   (A1)+,D1/D3/D4-D5/A1-A5
+    MOVEM.W   $1234,D1/D3/D4-D5/A1-A5
+    MOVEM.W   $12345678,D1/D3/D4-D5/A1-A5
+    MOVEM.L   (A1),D1/D3/D4-D5/A1-A5
+    MOVEM.L   (A1)+,D1/D3/D4-D5/A1-A5
+    MOVEM.L   $1234,D1/D3/D4-D5/A1-A5
+    MOVEM.L   $12345678,D1/D3/D4-D5/A1-A5
     SIMHALT             ; halt simalator
 
 * Put variables and constants here
 
     END    START        ; last line of source
+
+
+
+
 
 
 
