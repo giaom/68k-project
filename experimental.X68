@@ -76,6 +76,17 @@ TEST_SUB:
             DC  $6002
             DC  $6003
             
+            ; NOT commands
+            DC  $4602
+            DC  $4612
+            DC  $461A
+            DC  $46A2
+            DC  $4638
+            DC  $1234
+            DC  $4639
+            DC  $1234
+            DC  $5678
+            
             ; JSR commands
             DC  $4E92   * JSR (A2)
             DC  $4EB8   * JSR $1234.W
@@ -1156,7 +1167,7 @@ load_mssg_LEA
      
 load_mssg_NOTL
      LEA     mssg8, A1
-     JMP     PRINT_OPCODE
+     JMP     PRINT_NOT
      
 load_mssg_NOP
      LEA     mssg9, A1
@@ -1164,11 +1175,22 @@ load_mssg_NOP
      
 load_mssg_NOTW
      LEA     mssg10, A1
-     JMP     PRINT_OPCODE
+     JMP     PRINT_NOT
      
 load_mssg_NOTB
      LEA     mssg11, A1
-     JMP     PRINT_OPCODE
+     
+PRINT_NOT:
+     MOVE.B  #14,D0      
+     TRAP    #15         * Displays Message
+     
+     ; print tab after opcode
+     MOVE.B  #$9,D1  
+     MOVE.B  #6,D0
+     TRAP    #15
+        
+     MOVE.L  #1,D4
+     BRA EA_REG
      
 load_mssg_JSR
      LEA     mssg12, A1
