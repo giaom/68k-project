@@ -695,6 +695,106 @@ EA_DECODE
                BEQ        BCC_EA
                CMP        #35,D6
                BEQ        BCC_EA
+               CMP        #38,D6
+               BEQ        MEMORY_SHIFT_EA
+               CMP        #39,D6
+               BEQ        MEMORY_SHIFT_EA
+               CMP        #40,D6
+               BEQ        MEMORY_SHIFT_EA
+               CMP        #41,D6
+               BEQ        MEMORY_SHIFT_EA
+               CMP        #42,D6
+               BEQ        MEMORY_SHIFT_EA
+               CMP        #43,D6
+               BEQ        MEMORY_SHIFT_EA
+               CMP        #44,D6
+               BEQ        REGISTER_SHIFT_EA
+               CMP        #45,D6
+               BEQ        REGISTER_SHIFT_EA
+               CMP        #46,D6
+               BEQ        REGISTER_SHIFT_EA
+               CMP        #47,D6
+               BEQ        REGISTER_SHIFT_EA
+               CMP        #48,D6
+               BEQ        REGISTER_SHIFT_EA
+               CMP        #49,D6
+               BEQ        REGISTER_SHIFT_EA
+               CMP        #50,D6
+               BEQ        REGISTER_SHIFT_EA
+               CMP        #51,D6
+               BEQ        REGISTER_SHIFT_EA
+               CMP        #52,D6
+               BEQ        REGISTER_SHIFT_EA
+               CMP        #53,D6
+               BEQ        REGISTER_SHIFT_EA
+               CMP        #54,D6
+               BEQ        REGISTER_SHIFT_EA
+               CMP        #55,D6
+               BEQ        REGISTER_SHIFT_EA
+               CMP        #56,D6
+               BEQ        REGISTER_SHIFT_EA
+               CMP        #57,D6
+               BEQ        REGISTER_SHIFT_EA
+               CMP        #58,D6
+               BEQ        REGISTER_SHIFT_EA
+               CMP        #59,D6
+               BEQ        REGISTER_SHIFT_EA
+               CMP        #60,D6
+               BEQ        REGISTER_SHIFT_EA
+               CMP        #61,D6
+               BEQ        REGISTER_SHIFT_EA
+               
+REGISTER_SHIFT_EA
+               MOVE.W     (A5),D1
+               BTST        #5,D1
+               BEQ         REGISTER_SHIFT_IMMEDIATE
+               MOVE.W      (A5),D1
+               LSR         #8,D1
+               LSR         #1,D1
+               AND         #$00000007,D1
+               JSR         EA_PRINT_TABLE
+               
+REGISTER_SHIFT_DESTINATION
+               LEA         comma,A1
+               MOVE.L      #14,D0
+               TRAP        #15
+               MOVE.W      (A5),D1
+               AND         #$00000007,D1
+               JSR         EA_PRINT_TABLE
+               JMP         EA_RETURN
+               
+REGISTER_SHIFT_IMMEDIATE
+               MOVE.W      (A5),D1
+               LSR         #8,D1
+               LSR         #1,D1
+               AND         #$00000007,D1
+               LEA         premssg_tag,A1
+               MOVE.L      #14,D0
+               TRAP        #15
+               MOVE.L      #3,D0
+               TRAP        #15
+               BRA         REGISTER_SHIFT_DESTINATION
+           
+MEMORY_SHIFT_EA
+               MOVE.W     (A5),D1
+               AND        #$0000003F,D1
+               CMP        #$3C,D1
+               BEQ        Print_Invaild
+               LSR        #3,D1
+               CMP        #0,D1
+               BEQ        Print_Invaild
+               CMP        #1,D1
+               BEQ        Print_Invaild
+               MOVE.W     (A5),D1
+               AND        #$0000003F,D1
+               JSR        CHECK_VAILD
+               CMP        #1,D3
+               BEQ        Print_Invaild
+               MOVE.W     (A5),D1
+               AND        #$0000003F,D1
+               JSR        EA_PRINT_TABLE
+               JMP        EA_RETURN
+               
                
 BCC_EA         MOVE.W     (A5),D1
                AND        #$000000FF,D1
@@ -1985,6 +2085,7 @@ mssg59  DC.B  '     ASL.W',0
 mssg60  DC.B  '     ASL.B',0
 
     END    START        
+
 
 
 

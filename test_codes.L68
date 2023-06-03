@@ -1,6 +1,6 @@
 00005000 Starting Address
 Assembler used: EASy68K Editor/Assembler v5.16.01
-Created On: 6/2/2023 4:09:56 PM
+Created On: 6/2/2023 5:02:49 PM
 
 00000000                             1  *-----------------------------------------------------------
 00000000                             2  * Title      :
@@ -321,12 +321,65 @@ Created On: 6/2/2023 4:09:56 PM
 000053F2  6700 EC0C                317      BEQ     $4000
 000053F6  6F00 E108                318      BLE     $3500
 000053FA  6E00 7C04                319      BGT     $D000
-000053FE                           320      
-000053FE  FFFF FFFF                321      SIMHALT             ; halt simalator
-00005402                           322  
-00005402                           323  * Put variables and constants here
-00005402                           324  
-00005402                           325      END    START        ; last line of source
+000053FE                           320      ;ROL Memory shift
+000053FE  E7D1                     321      ROL     (A1)
+00005400  E7E1                     322      ROL     -(A1)
+00005402  E7DC                     323      ROL     (A4)+
+00005404  E7F8 1234                324      ROL     $1234
+00005408  E7F9 12345678            325      ROL     $12345678
+0000540E                           326      ;ROR Memory shift
+0000540E  E6D1                     327      ROR     (A1)
+00005410  E6E1                     328      ROR     -(A1)
+00005412  E6DC                     329      ROR     (A4)+
+00005414  E6F8 1234                330      ROR     $1234
+00005418  E6F9 12345678            331      ROR     $12345678    
+0000541E                           332      ;LSL Memory shift
+0000541E  E3D1                     333      LSL     (A1)
+00005420  E3E1                     334      LSL     -(A1)
+00005422  E3DC                     335      LSL     (A4)+
+00005424  E3F8 1234                336      LSL     $1234
+00005428  E3F9 12345678            337      LSL     $12345678  
+0000542E                           338      ;LSR Memory shift
+0000542E  E2D1                     339      LSR     (A1)
+00005430  E2E1                     340      LSR     -(A1)
+00005432  E2DC                     341      LSR     (A4)+
+00005434  E2F8 1234                342      LSR     $1234
+00005438  E2F9 12345678            343      LSR     $12345678
+0000543E                           344      ;ASR Memory shift
+0000543E  E0D1                     345      ASR     (A1)
+00005440  E0E1                     346      ASR     -(A1)
+00005442  E0DC                     347      ASR     (A4)+
+00005444  E0F8 1234                348      ASR     $1234
+00005448  E0F9 12345678            349      ASR     $12345678
+0000544E                           350      ;ASL Memory shift
+0000544E  E1D1                     351      ASL     (A1)
+00005450  E1E1                     352      ASL     -(A1)
+00005452  E1DC                     353      ASL     (A4)+
+00005454  E1F8 1234                354      ASL     $1234
+00005458  E1F9 12345678            355      ASL     $12345678
+0000545E                           356      ;ROL REGISTER shift
+0000545E  E559                     357      ROL     #2,D1
+00005460  E37A                     358      ROL     D1,D2
+00005462                           359      ;ROR REGISTER shift
+00005462  E459                     360      ROR     #2,D1
+00005464  E27A                     361      ROR     D1,D2
+00005466                           362      ;LSL REGISTER shift
+00005466  E549                     363      LSL     #2,D1
+00005468  E36A                     364      LSL     D1,D2
+0000546A                           365      ;LSR REGISTER shift
+0000546A  E449                     366      LSR     #2,D1
+0000546C  E26A                     367      LSR     D1,D2
+0000546E                           368      ;ASL REGISTER shift
+0000546E  E541                     369      ASL     #2,D1
+00005470  E362                     370      ASL     D1,D2
+00005472                           371      ;ASR REGISTER shift
+00005472  E441                     372      ASR     #2,D1
+00005474  E262                     373      ASR     D1,D2         
+00005476  FFFF FFFF                374      SIMHALT             ; halt simalator
+0000547A                           375  
+0000547A                           376  * Put variables and constants here
+0000547A                           377  
+0000547A                           378      END    START        ; last line of source
 
 No errors detected
 No warnings generated
