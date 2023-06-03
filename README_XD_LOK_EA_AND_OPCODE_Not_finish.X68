@@ -821,35 +821,7 @@ MOVEM_EA_REGISTER_TO_M
                
 
 MOVEA_PRINT_MASK
-               MOVE.W     (A3),D3
-               MOVE        #15,D2
-               LSR         #8,D3
-               CMP         #0,D3
-               BEQ         D_LOOP
-               MOVE.W      (A3),D3
-               
-A_FIRST_REGISTER
-               BTST         D2,D3
-               BNE          PRINT_A_FIRST_R
-               ADD          #-1,D2
-               BRA          A_FIRST_REGISTER
-               
-PRINT_A_FIRST_R
-              LEA           premssg_A,A1
-              MOVE.L        #14,D0
-              TRAP          #15
-              MOVE.L        D2,D1
-              ADD.L         #-1,D2
-              ADD.L         #-8,D1
-              MOVE.L        #3,D1
-              TRAP          #15
-              
-              CMP           #8,D2
-              BEQ           CHECK_D_LOOP
-              
-
-              
-CHECK_D_LOOP
+            
 
 MOVEA_PRINT_MASK_END
                RTS
