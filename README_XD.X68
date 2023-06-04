@@ -747,6 +747,8 @@ EA_DECODE
                BEQ        MOVEM_EA
                CMP        #14,D6
                BEQ        MOVEM_EA
+               CMP        #36,D6
+               BEQ        BCC_EA
                JMP        EA_RETURN
                
 MOVEM_EA       MOVE.L     A4,A3         ;A3 STORES THE LOCATION OF THE MASK
@@ -893,6 +895,7 @@ BCC_EA         MOVE.W     (A5),D1
                MOVE.L     A5,D2
                ADD.L      D2,D1
                ADD.L      #2,D1
+               MOVE.L     #2,D7
                
 BCC_EA_PRINT   
                LEA        premssg_hex,A1
@@ -928,7 +931,7 @@ ADDA_EA        MOVE.W     (A5),D1
                MOVE.W     (A5),D1
                BTST       #8,D1
                BEQ        ADDA_EA_W
-               MOVE.L     #2,D3
+               MOVE.L     #2,D3         ;LONG
                BRA        ADDA_EA_PRINT
                
 ADDA_EA_PRINT
@@ -2171,6 +2174,7 @@ mssg59  DC.B  '     ASL.W',0
 mssg60  DC.B  '     ASL.B',0
 
     END    START        
+
 
 
 
