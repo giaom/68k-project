@@ -140,6 +140,74 @@ TEST_SUB:
             DC  $1234
             DC  $5678
             
+            ; LSL commands
+            DC  $E00D  
+            DC  $E60D   
+            DC  $E62D   *
+            DC  $E68D   * 
+            DC  $E6AD   *
+ 
+            DC  $E2C5   * 
+            DC  $E2D5   * 
+            DC  $E2DD   * 
+            DC  $E2E5   * 
+            DC  $E2F8   * 
+            DC  $1234
+            DC  $E2F9   * 
+            DC  $1234
+            DC  $5678
+            
+            ; LSR commands
+            DC  $E10D
+            DC  $E70D
+            DC  $E72D
+            DC  $E78D
+            DC  $E7AD
+            
+            DC  $E3C5
+            DC  $E3D5
+            DC  $E3DD 
+            DC  $E3E5
+            DC  $E3F8
+            DC  $1234
+            DC  $E3F9
+            DC  $1234
+            DC  $5678
+            
+            ; ASL commands
+            DC  $E005  
+            DC  $E605   
+            DC  $E625   *
+            DC  $E685   * 
+            DC  $E6A5   *
+ 
+            DC  $E0C5   * 
+            DC  $E0D5   * 
+            DC  $E0DD   * 
+            DC  $E0E5   * 
+            DC  $E0F8   * 
+            DC  $1234
+            DC  $E0F9   * 
+            DC  $1234
+            DC  $5678
+            
+            ; ASR commands
+            DC  $E105
+            DC  $E705
+            DC  $E725
+            DC  $E785
+            DC  $E7A5
+            
+            DC  $E1C5
+            DC  $E1D5
+            DC  $E1DD
+            DC  $E1E5
+            DC  $E1F8
+            DC  $1234
+            DC  $E1F9
+            DC  $1234
+            DC  $5678
+
             ; AND commands
             DC  $C847
             ;DC  $C84F
@@ -274,6 +342,31 @@ TEST_SUB:
       
 START:  ORG     $1000 
     MOVE    #0,D5       * Used to track print lines per page
+    
+    ;ROR.B   #$1,D5
+   ; ROR.B   #$3,D5
+    ;ROR.B   D3,D5
+   ; ROR.W   (A5)
+    
+    ;LSL.B   #$0,D5
+    ;LSL.B   #$3,D5
+    ;LSL.B   D3,D5
+    ;LSL.W   (A5)
+    
+    ;LSR.B   #$0,D5
+    ;LSR.B   #$3,D5
+    ;LSR.B   D3,D5
+    ;LSR.W   (A5)
+    
+    ;ASL.B   #$0,D5
+    ;ASL.B   #$3,D5
+    ;ASL.B   D3,D5
+    ;ASL.W   (A5)
+    
+    ;ASR.W   #$0,D5
+    ;ASR.B   #$3,D5
+    ;ASR.B   D3,D5
+    ;ASR.W   (A5)
     
 ; Code
     BRA STARTADDR
@@ -1405,18 +1498,18 @@ load_mssg_BCC:
      
 load_mssg_ROL:
         LEA     mssg37, A1
-        MOVE.B  #14,D0      
-        TRAP    #15         * Displays Message
-        
-        JMP     ROR_HANDLING
+        BRA     ROR_HANDLING
      
 load_mssg_ROR:
         LEA     mssg38, A1
-        MOVE.B  #14,D0      
-        TRAP    #15         * Displays Message
         
 ROR_HANDLING:
-        MOVE.B  #$9,D1  ; print tab after opcode
+        ; Display message
+        MOVE.B  #14,D0      
+        TRAP    #15         
+        
+        ; print tab after opcode
+        MOVE.B  #$9,D1  
         MOVE.B  #6,D0
         TRAP    #15
         
@@ -1425,56 +1518,46 @@ ROR_HANDLING:
      
 load_mssg_LSL
         LEA     mssg39, A1
-        JMP     PRINT_OPCODE
+        BRA  ROR_HANDLING
      
 load_mssg_LSR
         LEA     mssg40, A1
-        JMP     PRINT_OPCODE
+        BRA  ROR_HANDLING
      
 load_mssg_ASR
         LEA     mssg41, A1
-        JMP     PRINT_OPCODE
+        BRA  ROR_HANDLING
      
 load_mssg_ASL
         LEA     mssg42, A1
-        JMP     PRINT_OPCODE
+        BRA  ROR_HANDLING
      
 load_mssg_RORL:
         LEA     mssg43, A1
-        MOVE.B  #14,D0      
-        TRAP    #15         * Displays Message
-        JMP ROc_COMMON
+        BRA  ROc_COMMON
      
 load_mssg_RORW:
         LEA     mssg44, A1
-        MOVE.B  #14,D0      
-        TRAP    #15         * Displays Message
-        JMP ROc_COMMON
+        BRA  ROc_COMMON
      
 load_mssg_RORB:
         LEA     mssg45, A1
-        MOVE.B  #14,D0      
-        TRAP    #15         * Displays Message
-        JMP ROc_COMMON
+        BRA  ROc_COMMON
      
 load_mssg_ROLL:
         LEA     mssg46, A1
-        MOVE.B  #14,D0      
-        TRAP    #15         * Displays Message
-        JMP ROc_COMMON
+        BRA  ROc_COMMON
      
 load_mssg_ROLW:
         LEA     mssg47, A1
-        MOVE.B  #14,D0      
-        TRAP    #15         * Displays Message
-        JMP ROc_COMMON
+        BRA  ROc_COMMON
      
 load_mssg_ROLB:
         LEA     mssg48, A1
+ROc_COMMON:
         MOVE.B  #14,D0      
         TRAP    #15         * Displays Message
 
-ROc_COMMON:
         MOVE.B  #$9,D1  ; print tab after opcode
         MOVE.B  #6,D0
         TRAP    #15
@@ -1524,51 +1607,51 @@ AFTER_I_NUM:
      
 load_mssg_LSLL:
         LEA     mssg49, A1
-        JMP     PRINT_OPCODE
+        BRA  ROc_COMMON
      
 load_mssg_LSLW:
         LEA     mssg50, A1
-        JMP     PRINT_OPCODE
+         BRA  ROc_COMMON
      
 load_mssg_LSLB:
         LEA     mssg51, A1
-        JMP     PRINT_OPCODE
+        BRA  ROc_COMMON
      
 load_mssg_LSRL:
         LEA     mssg52, A1
-        JMP     PRINT_OPCODE
+        BRA  ROc_COMMON
      
 load_mssg_LSRW:
         LEA     mssg53, A1
-        JMP     PRINT_OPCODE
+        BRA  ROc_COMMON
      
 load_mssg_LSRB:
         LEA     mssg54, A1
-        JMP     PRINT_OPCODE
+        BRA  ROc_COMMON
      
 load_mssg_ASRL:
         LEA     mssg55, A1
-        JMP     PRINT_OPCODE
+        BRA  ROc_COMMON
      
 load_mssg_ASRW:
         LEA     mssg56, A1
-        JMP     PRINT_OPCODE
+        BRA  ROc_COMMON
      
 load_mssg_ASRB:
         LEA     mssg57, A1
-        JMP     PRINT_OPCODE
+        BRA  ROc_COMMON
      
 load_mssg_ASLL:
         LEA     mssg58, A1
-        JMP     PRINT_OPCODE
+        BRA  ROc_COMMON
      
 load_mssg_ASLW:
         LEA     mssg59, A1
-        JMP     PRINT_OPCODE
+        BRA  ROc_COMMON
      
 load_mssg_ASLB:
         LEA     mssg60, A1
-        JMP     PRINT_OPCODE
+        BRA  ROc_COMMON
 
 *-----[Load Mssg End]-----     
 
