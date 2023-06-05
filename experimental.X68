@@ -105,8 +105,8 @@ TEST_SUB:
             DC  $3479
             DC  $1234
             DC  $5678
-            ;DC  $347C  * (Currently unsupported)
-            ;DC  $1234  * #$1234
+            DC  $347C  * (Currently unsupported)
+            DC  $1234  * #$1234
             
             ; MOVEQ commansds
             DC  $7A02  * MOVEQ  #2,D5
@@ -439,7 +439,7 @@ DECODE_LOOP:
     
 ; After every 10 prints, prompt user to press a key to continue printing
     ADD.B   #1,D5   * D5 used to track prints
-    CMP     #10,D5
+    CMP     #15,D5
     BLT     CHECK_END
     
     ; Prompt for [Enter]
@@ -1058,8 +1058,8 @@ PRINT_MEM_LOC:
     LEA     newline, A1
     MOVE.B  #14,D0
     TRAP    #15         ; Print newline
-    TRAP    #15         ; twice
-
+    
+    MOVE.L  #0,D1       ; Clear D1
     MOVE.W  A5,D1
     MOVE.B  #16,D2
     MOVE.B  #15,D0
@@ -1369,7 +1369,7 @@ load_mssg_MOVEQ:
      MOVE.B  #14,D0
      TRAP    #15
      
-     BRA     PRINT_D     ; Print register
+     JSR     PRINT_D     ; Print register
      BRA     DONE_LOAD
      
 load_mssg_ORB:
@@ -1801,25 +1801,66 @@ REG_WITH_MODE:
     RTS
 
 PRINT_Rxxx2:
-    LEA     premssg_hex, A1 ; print $ 
-    MOVE.B  #14,D0
-    TRAP    #15
-
     MOVE.W  (A5),D2 ; we have to set the register for Rxxx
     LSR.W   #8, D2
     LSR.W   #1, D2
     AND.W   #7, D2
     MOVE.L  A5,A4
-    ;ADD     #2,A4
+    ADD     #2,A4
     ADD     D7,A4
-    JSR     Rxxx_POSTREG
+ 
+    LEA     premssg_hex, A1 ; print $ 
+    MOVE.B  #14,D0
+    TRAP    #15
 
-    ADD    D7,A5
-    ;MOVE   A4,A5
-    RTS
+    CMP.B   #0,D2
+    BEQ     WORD_XXX2
+    
+    MOVE.L  #4,D3
+    LEA     postmssg_L,A3
+    MOVE.W  (A5),D2
+    MOVE.L  (A4),D1
+    BRA     POST_WORD_XXX2
+    
+WORD_XXX2:
+    MOVE.L  #2,D3
+    LEA     postmssg_W,A3
+    MOVE.L  #0,D1
+    MOVE.W  (A4),D1
+    
+POST_WORD_XXX2:    
+    MOVE.B  #15,D0
+    MOVE.B  #16,D2
+    TRAP    #15
+    
+    MOVE.L   A3,A1
+    MOVE.B  #14,D0
+    TRAP    #15
+
+    CMP     #6,D4       ; We're being called as a subroutine if D4 is 6
+    BEQ     POST_WORD_DONE2
+
+    CMP     #1,D4       ; We're done if in <ea> - Dn -> <ea> mode
+    BEQ     POST_WORD_DONE2
+    
+    LEA     comma,A1
+    MOVE.B  #14,D0
+    TRAP    #15
+    
+    JSR     PRINT_DREG
+    
+POST_WORD_DONE2:
+    ADD     D3,A4
+    SUB     #2,A4   ; Subtract length of instruction
+    MOVE    A4,A5
+    MOVE    D3, D7  ; Store how many bytes to increment the PC in D7, needed for MOVE
+    
+    CMP     #6,D4   ; We're being called as a subroutine if D4 is 6
+    BEQ     DONE_RTS
+    
+    BRA     DONE_LOAD   
 
 PRINT_Dn2:
-
     JSR     PRINT_DREG
     RTS
 
@@ -1985,28 +2026,49 @@ PRINT_RAnD:
     BRA     DONE_LOAD
 
 PRINT_Rxxx:
-    LEA     premssg_hex, A1 ; print $ 
-    MOVE.B  #14,D0
-    TRAP    #15
-
-    MOVE.W  (A5),D2         ; Store register in D2
+    MOVE.W  (A5),D2  ; Store register in D2
     AND.W   #7,D2
     MOVE.L  A5,A4
     ADD     #2,A4
     
 Rxxx_POSTREG:    ; for MOVE the second time round we need to get the register from the destination
+    
+    CMP.B   #4,D2
+    BNE     Rxxx_NO_HASH
+    
+    LEA     premssg_tag, A1 ; print #
+    MOVE.B  #14,D0
+    TRAP    #15
+    
+    LEA     premssg_hex, A1 ; print $ 
+    MOVE.B  #14,D0
+    TRAP    #15
+    
+    MOVE.L  #2,D3 
+    LEA     postmssg_Nothing,A3
+    MOVE.L  #0,D1           ; Clear D1
+    MOVE.W  (A4),D1
+    BRA     POST_WORD_XXX
+
+Rxxx_NO_HASH:
+    LEA     premssg_hex, A1 ; print $ 
+    MOVE.B  #14,D0
+    TRAP    #15
+
     CMP.B   #0,D2
     BEQ     WORD_XXX
     
     MOVE.L  #4,D3
     LEA     postmssg_L,A3
     MOVE.W  (A5),D2
+    MOVE.L  #0,D1           ; Clear D1
     MOVE.L  (A4),D1
     BRA     POST_WORD_XXX
     
 WORD_XXX:
     MOVE.L  #2,D3
     LEA     postmssg_W,A3
+    MOVE.L  #0,D1           ; Clear D1
     MOVE.W  (A4),D1
     
 POST_WORD_XXX:    
@@ -2115,6 +2177,7 @@ postmssg_p_L         DC.B  ').L',0
 
 postmssg_W           DC.B  '.W',0
 postmssg_L           DC.B  '.L',0
+postmssg_Nothing     DC.B  '',0
 
 comma                DC.B  ',',0
 newline              DC.B  '',CR,LF,0
@@ -2124,61 +2187,61 @@ mssg2 DC.B    '     MOVE.L',0
 mssg3 DC.B    '     MOVE.W',0
 mssg4 DC.B    '     MOVEA.L',0
 mssg5 DC.B    '     MOVEA.W',0
-mssg6 DC.B    '     RTS',0
-mssg7 DC.B    '     LEA',0
-mssg8 DC.B    '     NOT.L',0
-mssg9 DC.B    '     NOP',0
-mssg10 DC.B   '     NOT.W',0
-mssg11 DC.B   '     NOT.B',0
-mssg12 DC.B   '     JSR',0
+mssg6 DC.B    '     RTS    ',0
+mssg7 DC.B    '     LEA    ',0
+mssg8 DC.B    '     NOT.L  ',0
+mssg9 DC.B    '     NOP    ',0
+mssg10 DC.B   '     NOT.W  ',0
+mssg11 DC.B   '     NOT.B  ',0
+mssg12 DC.B   '     JSR    ',0
 mssg13 DC.B   '     MOVEM.L',0
 mssg14 DC.B   '     MOVEM.W',0
-mssg15 DC.B   '     ADDQ.W',0
-mssg16 DC.B   '     ADDQ.L',0
-mssg17 DC.B   '     ADDQ.B',0
-mssg18 DC.B   '     MOVE.Q',0
-mssg19 DC.B   '     OR.B',0
-mssg20 DC.B   '     OR.W',0
-mssg21 DC.B   '     OR.L',0
-mssg22 DC.B   '     SUB.B',0
-mssg23 DC.B   '     SUB.W',0
-mssg24 DC.B   '     SUB.L',0
-mssg25 DC.B   '     AND.B',0
-mssg26 DC.B   '     AND.W',0
-mssg27 DC.B   '     AND.L',0
-mssg28 DC.B   '     ADDA.L',0
-mssg29 DC.B   '     ADDA.W',0
-mssg30 DC.B   '     ADD.B',0
-mssg31 DC.B   '     ADD.W',0
-mssg31b DC.B   '     ADD.L',0
-mssg32 DC.B   '     BGT',0
-mssg33 DC.B   '     BLE',0
-mssg34 DC.B   '     BRA',0
-mssg35  DC.B  '     BEQ',0
-mssg36  DC.B  '     BCC',0
-mssg37  DC.B  '     ROL',0
-mssg38  DC.B  '     ROR',0
-mssg39  DC.B  '     LSL',0
-mssg40  DC.B  '     LSR',0
-mssg41  DC.B  '     ASR',0
-mssg42  DC.B  '     ASL',0
-mssg43  DC.B  '     ROR.L',0
-mssg44  DC.B  '     ROR.W',0
-mssg45  DC.B  '     ROR.B',0
-mssg46  DC.B  '     ROL.L',0
-mssg47  DC.B  '     ROL.W',0
-mssg48  DC.B  '     ROL.B',0
-mssg49  DC.B  '     LSL.L',0
-mssg50  DC.B  '     LSL.W',0
-mssg51  DC.B  '     LSL.B',0
-mssg52  DC.B  '     LSR.L',0
-mssg53  DC.B  '     LSR.W',0
-mssg54  DC.B  '     LSR.B',0
-mssg55  DC.B  '     ASR.L',0
-mssg56  DC.B  '     ASR.W',0
-mssg57  DC.B  '     ASR.B',0
-mssg58  DC.B  '     ASL.L',0
-mssg59  DC.B  '     ASL.W',0
-mssg60  DC.B  '     ASL.B',0
+mssg15 DC.B   '     ADDQ.W ',0
+mssg16 DC.B   '     ADDQ.L ',0
+mssg17 DC.B   '     ADDQ.B ',0
+mssg18 DC.B   '     MOVEQ  ',0
+mssg19 DC.B   '     OR.B   ',0
+mssg20 DC.B   '     OR.W   ',0
+mssg21 DC.B   '     OR.L   ',0
+mssg22 DC.B   '     SUB.B  ',0
+mssg23 DC.B   '     SUB.W  ',0
+mssg24 DC.B   '     SUB.L  ',0
+mssg25 DC.B   '     AND.B  ',0
+mssg26 DC.B   '     AND.W  ',0
+mssg27 DC.B   '     AND.L  ',0
+mssg28 DC.B   '     ADDA.L ',0
+mssg29 DC.B   '     ADDA.W ',0
+mssg30 DC.B   '     ADD.B  ',0
+mssg31 DC.B   '     ADD.W  ',0
+mssg31b DC.B  '     ADD.L  ',0
+mssg32 DC.B   '     BGT    ',0
+mssg33 DC.B   '     BLE    ',0
+mssg34 DC.B   '     BRA    ',0
+mssg35  DC.B  '     BEQ    ',0
+mssg36  DC.B  '     BCC    ',0
+mssg37  DC.B  '     ROL    ',0
+mssg38  DC.B  '     ROR    ',0
+mssg39  DC.B  '     LSL    ',0
+mssg40  DC.B  '     LSR    ',0
+mssg41  DC.B  '     ASR    ',0
+mssg42  DC.B  '     ASL    ',0
+mssg43  DC.B  '     ROR.L  ',0
+mssg44  DC.B  '     ROR.W  ',0
+mssg45  DC.B  '     ROR.B  ',0
+mssg46  DC.B  '     ROL.L  ',0
+mssg47  DC.B  '     ROL.W  ',0
+mssg48  DC.B  '     ROL.B  ',0
+mssg49  DC.B  '     LSL.L  ',0
+mssg50  DC.B  '     LSL.W  ',0
+mssg51  DC.B  '     LSL.B  ',0
+mssg52  DC.B  '     LSR.L  ',0
+mssg53  DC.B  '     LSR.W  ',0
+mssg54  DC.B  '     LSR.B  ',0
+mssg55  DC.B  '     ASR.L  ',0
+mssg56  DC.B  '     ASR.W  ',0
+mssg57  DC.B  '     ASR.B  ',0
+mssg58  DC.B  '     ASL.L  ',0
+mssg59  DC.B  '     ASL.W  ',0
+mssg60  DC.B  '     ASL.B  ',0
 
     END    START        
