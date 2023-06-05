@@ -76,6 +76,42 @@ TEST_SUB:
             DC  $6002
             DC  $6003
             
+            ; MOVE commands
+            DC  $1202
+            DC  $128A
+            DC  $12D2
+            DC  $1322
+            DC  $11F8
+            DC  $1234
+            DC  $4321
+            DC  $13F9
+            DC  $1234
+            DC  $5678
+            DC  $8765
+            DC  $4321
+            DC  $11F9
+            DC  $1234
+            DC  $5678
+            DC  $ABCD
+            
+            ; MOVEA commands
+            DC  $3441
+            DC  $3449
+            DC  $2451
+            DC  $3451
+            DC  $3461
+            DC  $3478
+            DC  $1234
+            DC  $3479
+            DC  $1234
+            DC  $5678
+            ;DC  $347C  * (Currently unsupported)
+            ;DC  $1234  * #$1234
+            
+            ; MOVEQ commansds
+            DC  $7A02  * MOVEQ  #2,D5
+            DC  $7C91  * MOVEQ  #145,D6
+            
             ; NOT commands
             DC  $4602
             DC  $4612
@@ -341,61 +377,31 @@ TEST_SUB:
             
       
 START:  ORG     $1000 
-    MOVE    #0,D5       * Used to track print lines per page
+    MOVE    #0,D5       ; D5 used to track print lines per page
     
-    ;ROR.B   #$1,D5
-   ; ROR.B   #$3,D5
-    ;ROR.B   D3,D5
-   ; ROR.W   (A5)
-    
-    ;LSL.B   #$0,D5
-    ;LSL.B   #$3,D5
-    ;LSL.B   D3,D5
-    ;LSL.W   (A5)
-    
-    ;LSR.B   #$0,D5
-    ;LSR.B   #$3,D5
-    ;LSR.B   D3,D5
-    ;LSR.W   (A5)
-    
-    ;ASL.B   #$0,D5
-    ;ASL.B   #$3,D5
-    ;ASL.B   D3,D5
-    ;ASL.W   (A5)
-    
-    ;ASR.W   #$0,D5
-    ;ASR.B   #$3,D5
-    ;ASR.B   D3,D5
-    ;ASR.W   (A5)
-    
-; Code
     BRA STARTADDR
 
 ;========================[Request user INPUT]===========================
 ENDADDR:    
-    ;prompt user
-    MOVE    #1,D6       ; keeps track if storing start/end
+    MOVE    #1,D6       ; D6 used to keep track if storing start/end
     LEA     prompt2,A1
     MOVE.B  #14,D0
-    TRAP    #15
-    BRA     FORMAT
+    TRAP    #15         ; Display message prompting user
+    BRA     FORMAT 
 
 STARTADDR:
-    ;prompt user
     LEA     prompt1,A1
     MOVE.B  #14,D0
-    TRAP    #15
+    TRAP    #15         ; Display message prompting user
 
 FORMAT:    
-    ;let user know format
     LEA     examp,A1
     MOVE.B  #14,D0
-    TRAP    #15
+    TRAP    #15         ; Display message informing user of input format
    
-    MOVE.L  #0, D2        ; Initialize subtotal   
-    MOVE.L  #7, D3        ; Number of digits
-    ; DBRA stops when it becomes -1, so made 8 to 7 to fix
-        
+    MOVE.L  #0, D2      ; Initialize subtotal   
+    MOVE.L  #7, D3      ; Number of digits
+                        ; DBRA stops when it becomes -1, so made 8 to 7 to fix       
 LOOP1:
     ;shfit num
     ASL.L   #4,D2
@@ -474,19 +480,16 @@ CHECK_END
 * Date       : 5/11/2023
 * Description:
 *-----------------------------------------------------------
-stack            EQU      $A000
-example          EQU      $E7F8   *made up bits       
+stack            EQU      $A000      
 shift            EQU      12      *Shift 12 bits 
 
 DECODE:
 *------------Use A0, d1,d0,d2,A2,A1
                LEA     jmp_table,A0    *Index into the table
                CLR.L   D0              *Zero it
-               ;MOVE.W  #example,D0    *We'll play with it here
                MOVE.W  (A5),D0
                MOVE.B  #shift,D1       *Shift 12 bits to the right  
-               LSR.W   D1,D0           *Move the bits
-               ;MOVE.L   #example,D1   
+               LSR.W   D1,D0           *Move the bits 
                MOVE.W  (A5),D1         *Store that full 16 bits at d1 
                CMP      #0,D0
 jmp_table      BEQ.L     code0000
@@ -529,7 +532,6 @@ code0001       MOVE.B      #1,D0            ;MOVE.B
                JMP         DONE
 
 code0010       
-               MOVE.L   #example,D1    *Store that full 16 bits at d1 
                BTST        #6,D1
                BEQ         MOVEL
                BTST        #7,D1
@@ -545,7 +547,6 @@ MOVEL          MOVE.L      #2,D0
                JMP         DONE
 
 code0011
-               MOVE.L   #example,D1    *Store that full 16 bits at d1 
                BTST        #6,D1
                BEQ         MOVEW
                BTST        #7,D1
@@ -870,25 +871,25 @@ ROLR       BTST         #7,D1
            BEQ          ROLBW
            BTST         #6,D1
            BNE          data
-           MOVE.L       #47,D0              ;ROL.L
+           MOVE.L       #47,D0           ;ROL.L
            MOVE.L       #1,D1
            JMP          DONE
            
 ROLBW      BTST         #6,D1
-           BEQ          ROLB                ;ROL.W
+           BEQ          ROLB             ;ROL.W
            MOVE.L       #48,D0
            MOVE.L       #1,D1
            JMP          DONE
            
 ROLB       MOVE.L       #49,D0
-           MOVE.L       #1,D1              ;ROL.B
+           MOVE.L       #1,D1            ;ROL.B
            JMP          DONE
 
 AORL        BTST        #3,D1
             BEQ         ASRR
             BTST        #8,D1
             BEQ         LSRR
-            BTST        #7,D1           ;LSL(Register shift)
+            BTST        #7,D1           ; LSL(Register shift)
             BEQ         LSLBW
             BTST        #6,D1
             BNE         data
@@ -930,17 +931,17 @@ ASRR        BTST        #8,D1
             BEQ         ASRBW
             BTST        #6,D1
             BNE         data
-            MOVE.L      #56,D0              ;ASR.L
+            MOVE.L      #56,D0          ;ASR.L
             MOVE.L      #1,D1
             JMP         DONE
             
 ASRBW       BTST        #6,D1
             BEQ         ASRB
-            MOVE.L      #57,D0              ;ASR.W
+            MOVE.L      #57,D0          ;ASR.W
             MOVE.L      #1,D1
             JMP         DONE
             
-ASRB       MOVE.L       #58,D0              ;ASR.B
+ASRB       MOVE.L       #58,D0          ;ASR.B
            MOVE.L       #1,D1
            JMP          DONE
            
@@ -948,19 +949,19 @@ ASLR       BTST         #7,D1
            BEQ          ASLBW
            BTST         #6,D1
            BNE          data
-           MOVE.L       #59,D0              ;ASL.L
+           MOVE.L       #59,D0          ;ASL.L
            MOVE.L       #1,D1
            JMP          DONE
            
            
 ASLBW       BTST       #6,D1
             BEQ         ASLB
-            MOVE.L      #60,D0              ;ASL.W
+            MOVE.L      #60,D0          ;ASL.W
             MOVE.L      #1,D1
             JMP         DONE
             
 ASLB        MOVE.L      #61,D0
-            MOVE.L      #1,D1               ;ASL.B
+            MOVE.L      #1,D1           ;ASL.B
              JMP         DONE
            
 
@@ -1046,20 +1047,18 @@ DONE           RTS        ;STOP        #$2700
 ; Use first 16-bits to see intruction type. For handling larger instruction types.
 
 ;============[OUTPUT: memory location, op-code, operand]===============
-OUTPUT:
-; Need to use D0 and D2, so move variables
+OUTPUT:            ; Need to use D0 and D2, so move variables
     MOVE.B  D0, D7 * Store op code key
     MOVE.B  D1, D6 * Store bool, does opcode have atleast 1 EA?
     
-    ; we use D4 to signal ADDA changes or type of addressing we're doing
+                    ; D4 is used to signal ADDA changes or type of addressing we're doing
     MOVE.L  #0,D4   ; signal that we are doing Dn - <ea> -> Dn case by default
 
 PRINT_MEM_LOC:
-; print newline
     LEA     newline, A1
     MOVE.B  #14,D0
-    TRAP    #15
-    TRAP    #15
+    TRAP    #15         ; Print newline
+    TRAP    #15         ; twice
 
     MOVE.W  A5,D1
     MOVE.B  #16,D2
@@ -1211,43 +1210,69 @@ CMPR_OP_KEY:
     BEQ     load_mssg_ASLB
 
 *-----[Load Mssg Start]-----     
-load_mssg_MOVEB
+load_mssg_MOVEB:
      LEA     mssg1, A1
-     JMP     PRINT_OPCODE
+     BRA     PRINT_MOVE
     
-load_mssg_MOVEL
+load_mssg_MOVEL:
      LEA     mssg1, A1
-     JMP     PRINT_OPCODE
+     BRA     PRINT_MOVE
      
-load_mssg_MOVEW
-     LEA     mssg3, A1
-     JMP     PRINT_OPCODE
+load_mssg_MOVEW:
+     LEA     mssg3, A1  
+
+PRINT_MOVE:
+     MOVE.B  #14,D0      
+     TRAP    #15           ; Display OPCODE message
+     
+     MOVE.B  #$9,D1        ; Print tab after opcode
+     MOVE.B  #6,D0
+     TRAP    #15
+     
+     MOVE    #0,D7         ; this will tell us the displacement required for Rxxx commands
+     MOVE.B  #6,D4         ; signal to return
+     
+     JSR    EA_REG         ; SOURCE
+     SUB    D7,A5
+     
+     LEA     comma, A1     ; Print comma
+     MOVE.B  #14,D0
+     TRAP    #15
+     
+     JSR    REG_WITH_MODE  ; DESTINATION
+
+     BRA    DONE_LOAD
       
-load_mssg_MOVEAL
+load_mssg_MOVEAL:
      LEA     mssg4, A1
-     JMP     PRINT_OPCODE
+     BRA     PRINT_MOVEA
      
-load_mssg_MOVEAW
+load_mssg_MOVEAW:
      LEA     mssg5, A1
-     JMP     PRINT_OPCODE
+
+PRINT_MOVEA:  
+     MOVE.B  #14,D0      
+     TRAP    #15     ; Display opcode message
      
-load_mssg_RTS
+     MOVE.L  #2,D4   ; Signal that we are doing ADDA not ADD
+     JMP     SUB_ADDRESSING
+     
+load_mssg_RTS:
      LEA     mssg6, A1
      JMP     PRINT_OPCODE
      
-load_mssg_LEA
+load_mssg_LEA:
      LEA     mssg7, A1
      MOVE.B  #14,D0      
-     TRAP    #15         * Displays Message
+     TRAP    #15    ; Display opcode message
      
-    MOVE.B  #$9,D1  ; print tab after opcode
+    MOVE.B  #$9,D1  ; Print tab after opcode
     MOVE.B  #6,D0
     TRAP    #15
 
-    ; move mode into D3
-    MOVE.W  (A5), D3
+    MOVE.W  (A5),D3 ; Move mode into D3
     LSR.W   #3,D3
-    AND.W  #$7, D3  
+    AND.W  #$7,D3  
     
     MOVE.B  #2,D4
     CMP     #2, D3
@@ -1258,162 +1283,182 @@ load_mssg_LEA
     
     BRA     DONE_LOAD
      
-load_mssg_NOTL
+load_mssg_NOTL:
      LEA     mssg8, A1
      JMP     PRINT_NOT
      
-load_mssg_NOP
+load_mssg_NOP:
      LEA     mssg9, A1
      JMP     PRINT_OPCODE
      
-load_mssg_NOTW
+load_mssg_NOTW:
      LEA     mssg10, A1
      JMP     PRINT_NOT
      
-load_mssg_NOTB
+load_mssg_NOTB:
      LEA     mssg11, A1
      
 PRINT_NOT:
      MOVE.B  #14,D0      
-     TRAP    #15         * Displays Message
+     TRAP    #15       ; Display opcode message
      
-     ; print tab after opcode
-     MOVE.B  #$9,D1  
+     MOVE.B  #$9,D1    ; Print tab after opcode   
      MOVE.B  #6,D0
-     TRAP    #15
+     TRAP    #15     
         
      MOVE.L  #1,D4
      BRA EA_REG
      
-load_mssg_JSR
+load_mssg_JSR:
      LEA     mssg12, A1
      MOVE.B  #14,D0      
-     TRAP    #15         * Displays Message
+     TRAP    #15       ; Display opcode message
      
-     MOVE.B  #$9,D1  ; print tab after opcode
+     MOVE.B  #$9,D1    ; Print tab after opcode
      MOVE.B  #6,D0
      TRAP    #15
         
       MOVE.L  #1,D4
       BRA EA_REG
      
-load_mssg_MOVEML
+load_mssg_MOVEML:
      LEA     mssg13, A1
      JMP     PRINT_OPCODE
      
-load_mssg_MOVEMW
-     LEA     mssg14, A1
+load_mssg_MOVEMW:
+     LEA     mssg14,A1
      JMP     PRINT_OPCODE
      
-load_mssg_ADDQW
-     LEA     mssg15, A1
+load_mssg_ADDQW:
+     LEA     mssg15,A1
      MOVE.B  #14,D0      
-     TRAP    #15         * Displays Message
+     TRAP    #15        ; Display opcode message
      JMP     ADDQ_ADDRESSING
      
-load_mssg_ADDQL
-     LEA     mssg16, A1
+load_mssg_ADDQL:
+     LEA     mssg16,A1
      MOVE.B  #14,D0      
-     TRAP    #15         * Displays Message
+     TRAP    #15        ; Display opcode message
      JMP     ADDQ_ADDRESSING
      
-load_mssg_ADDQB
-     LEA     mssg17, A1
+load_mssg_ADDQB:
+     LEA     mssg17,A1
      MOVE.B  #14,D0      
-     TRAP    #15         * Displays Message
+     TRAP    #15        ; Display opcode message
      JMP     ADDQ_ADDRESSING
      
-load_mssg_MOVEQ
-     LEA     mssg18, A1
-     JMP     PRINT_OPCODE
-     
-load_mssg_ORB
-     LEA     mssg19, A1
+load_mssg_MOVEQ:
+     LEA     mssg18,A1
      MOVE.B  #14,D0      
-     TRAP    #15         * Displays Message
+     TRAP    #15        ; Display opcode message
+     
+     MOVE.B  #$9,D1     ; Print tab after opcode
+     MOVE.B  #6,D0
+     TRAP    #15
+     
+     LEA     premssg_tag, A1
+     MOVE.B  #14,D0 
+     TRAP    #15        ; Print '#'
+     
+     MOVE.W  (A5),D1    ; Store only first 8 bits (data) in D1
+     AND.W   #$FF,D1
+     MOVE.B  #3,D0      ; then display 
+     TRAP    #15     
+     
+     LEA     comma, A1  ; Print comma
+     MOVE.B  #14,D0
+     TRAP    #15
+     
+     BRA     PRINT_D     ; Print register
+     BRA     DONE_LOAD
+     
+load_mssg_ORB:
+     LEA     mssg19,A1
+     MOVE.B  #14,D0      
+     TRAP    #15       ; Display opcode message
      JMP     SUB_ADDRESSING
      
-load_mssg_ORW
-     LEA     mssg20, A1
+load_mssg_ORW:
+     LEA     mssg20,A1
      MOVE.B  #14,D0      
-     TRAP    #15         * Displays Message
+     TRAP    #15         ; Display opcode message
      JMP     SUB_ADDRESSING
      
-load_mssg_ORL
+load_mssg_ORL:
      LEA     mssg21, A1
      MOVE.B  #14,D0      
-     TRAP    #15         * Displays Message
+     TRAP    #15         ; Display opcode message
      JMP     SUB_ADDRESSING
      
-load_mssg_SUBB
+load_mssg_SUBB:
      LEA     mssg22, A1
      MOVE.B  #14,D0      
-     TRAP    #15         * Displays Message
+     TRAP    #15         ; Display opcode message
      JMP     SUB_ADDRESSING
     
      
-load_mssg_SUBW
+load_mssg_SUBW:
      LEA     mssg23, A1
      MOVE.B  #14,D0      
-     TRAP    #15         * Displays Message
+     TRAP    #15         ; Display opcode message
      JMP     SUB_ADDRESSING
      
-load_mssg_SUBL
+load_mssg_SUBL:
      LEA     mssg24, A1
      MOVE.B  #14,D0      
-     TRAP    #15         * Displays Message
+     TRAP    #15         ; Display opcode message
      JMP     SUB_ADDRESSING
      
-load_mssg_ANDB
+load_mssg_ANDB:
      LEA     mssg25, A1
      MOVE.B  #14,D0      
-     TRAP    #15         * Displays Message
+     TRAP    #15         ; Display opcode message
      JMP     SUB_ADDRESSING
      
-load_mssg_ANDW
+load_mssg_ANDW:
      LEA     mssg26, A1
      MOVE.B  #14,D0      
-     TRAP    #15         * Displays Message
+     TRAP    #15         ; Display opcode message
      JMP     SUB_ADDRESSING
      
-load_mssg_ANDL
+load_mssg_ANDL:
      LEA     mssg27, A1
      MOVE.B  #14,D0      
-     TRAP    #15         * Displays Message
+     TRAP    #15         ; Display opcode message
      JMP     SUB_ADDRESSING
      
-load_mssg_ADDAL
+load_mssg_ADDAL:
      LEA     mssg28, A1
      MOVE.B  #14,D0      
-     TRAP    #15         * Displays Message
+     TRAP    #15         ; Display opcode message
      
-     MOVE.L  #2,D4   ; signal that we are doing ADDA not ADD
+     MOVE.L  #2,D4       ; Signal that we are doing ADDA not ADD
      JMP     SUB_ADDRESSING
      
-load_mssg_ADDAW
+load_mssg_ADDAW:
      LEA     mssg29, A1
      MOVE.B  #14,D0      
-     TRAP    #15         * Displays Message
+     TRAP    #15         ; Display opcode message
      
-     MOVE.L  #2,D4   ; signal that we are doing ADDA not ADD
+     MOVE.L  #2,D4       ; Signal that we are doing ADDA not ADD
      JMP     SUB_ADDRESSING
      
-load_mssg_ADDB
+load_mssg_ADDB:
      LEA     mssg30, A1
      MOVE.B  #14,D0      
-     TRAP    #15         * Displays Message
+     TRAP    #15         ; Display opcode message
      JMP     SUB_ADDRESSING
      
-load_mssg_ADDW
+load_mssg_ADDW:
      LEA     mssg31, A1
      MOVE.B  #14,D0      
-     TRAP    #15         * Displays Message
+     TRAP    #15         ; Display opcode message
      JMP     SUB_ADDRESSING
      
 load_mssg_ADDL:
      LEA     mssg31b, A1
      MOVE.B  #14,D0      
-     TRAP    #15         * Displays Message
+     TRAP    #15         ; Display opcode message
      JMP     SUB_ADDRESSING
      
 load_mssg_BGT:
@@ -1431,34 +1476,29 @@ load_mssg_BLE:
      BRA    HANDLE_DISPLACEMENT
      
 load_mssg_BRA:
-    ; Display BRA
-     LEA     mssg34, A1
+     LEA     mssg34, A1      ; Display opcode message ("BRA")
      MOVE.B  #14,D0      
      TRAP    #15  
      
 HANDLE_DISPLACEMENT:
-     ; print tab after opcode
-     MOVE.B  #$9,D1  
+     MOVE.B  #$9,D1          ; Print tab after opcode  
      MOVE.B  #6,D0
      TRAP    #15
      
-     ; print $ 
-     LEA     premssg_hex, A1
+     LEA     premssg_hex, A1 ; Print $ 
      MOVE.B  #14,D0
-     TRAP    #15
+     TRAP    #15        
      
      MOVE.L A5,A4
      ADD.L  #2,A4
      
-     ; store displacement in D1
-    MOVE.W  (A5),D1
+    MOVE.W  (A5),D1          ; Store displacement in D1
     AND.W   #$FF, D1
   
-    
-    CMP.B   #0, D1
+    CMP.B   #0,D1
     BEQ     WORD_DISPLACEMENT
     
-    CMP.B   #$FF, D1
+    CMP.B   #$FF,D1
     BEQ     LONG_DISPLACEMENT
     
     BRA     POST_LONG_DISPLACEMENT
@@ -1475,8 +1515,7 @@ LONG_DISPLACEMENT:
 POST_LONG_DISPLACEMENT:
     ADD.L   A4,D1
     
-    ; prints number in hex
-    MOVE.B  #15, D0
+    MOVE.B  #15, D0 ; Print number in hex
     MOVE.B  #16, D2
     TRAP    #15
     
@@ -1504,12 +1543,10 @@ load_mssg_ROR:
         LEA     mssg38, A1
         
 ROR_HANDLING:
-        ; Display message
-        MOVE.B  #14,D0      
+        MOVE.B  #14,D0  ; Display opcode message  
         TRAP    #15         
         
-        ; print tab after opcode
-        MOVE.B  #$9,D1  
+        MOVE.B  #$9,D1  ; Print tab after opcode
         MOVE.B  #6,D0
         TRAP    #15
         
@@ -1518,52 +1555,51 @@ ROR_HANDLING:
      
 load_mssg_LSL
         LEA     mssg39, A1
-        BRA  ROR_HANDLING
+        BRA     ROR_HANDLING
      
 load_mssg_LSR
         LEA     mssg40, A1
-        BRA  ROR_HANDLING
+        BRA     ROR_HANDLING
      
 load_mssg_ASR
         LEA     mssg41, A1
-        BRA  ROR_HANDLING
+        BRA     ROR_HANDLING
      
 load_mssg_ASL
         LEA     mssg42, A1
-        BRA  ROR_HANDLING
+        BRA     ROR_HANDLING
      
 load_mssg_RORL:
         LEA     mssg43, A1
-        BRA  ROc_COMMON
+        BRA     ROc_COMMON
      
 load_mssg_RORW:
         LEA     mssg44, A1
-        BRA  ROc_COMMON
+        BRA     ROc_COMMON
      
 load_mssg_RORB:
         LEA     mssg45, A1
-        BRA  ROc_COMMON
+        BRA     ROc_COMMON
      
 load_mssg_ROLL:
         LEA     mssg46, A1
-        BRA  ROc_COMMON
+        BRA     ROc_COMMON
      
 load_mssg_ROLW:
         LEA     mssg47, A1
-        BRA  ROc_COMMON
+        BRA     ROc_COMMON
      
 load_mssg_ROLB:
         LEA     mssg48, A1
 ROc_COMMON:
         MOVE.B  #14,D0      
-        TRAP    #15         * Displays Message
+        TRAP    #15     ; Displays opcode message
 
-        MOVE.B  #$9,D1  ; print tab after opcode
+        MOVE.B  #$9,D1  ; Print tab after opcode
         MOVE.B  #6,D0
         TRAP    #15
     
-        ; move i/r to D2
-        MOVE.W  (A5),D2
+        MOVE.W  (A5),D2 ; Move i/r to D2
         LSR.W   #5,D2
         AND.W   #$1,D2
      
@@ -1578,16 +1614,15 @@ IMMEDIATE_NUM:
         MOVE.B  #14,D0
         TRAP    #15
         
-        ; can't call PRINT_DREG as we have to convert 0 to 8
-        MOVE.L  #0,D1
-        MOVE.W  (A5), D1
+        MOVE.L  #0,D1   ; Can't call PRINT_DREG
+        MOVE.W  (A5),D1 ; as we have to convert 0 to 8
         LSR.W   #8, D1
         LSR.W   #1, D1
         AND.W   #7, D1
         CMP     #0, D1
         BNE     I_NUM_NOT_ZERO
         
-        MOVE.B  #8, D1  ; if immediate num is 0, it implies 8
+        MOVE.B  #8, D1  ; If immediate num is 0, it implies 8
         
 I_NUM_NOT_ZERO:
         MOVE.B  #3, D0
@@ -1657,12 +1692,12 @@ load_mssg_ASLB:
 
 PRINT_OPCODE:
     MOVE.B  #14,D0      
-    TRAP    #15         * Displays Message
+    TRAP    #15    ; Displays opcode message
     
     JMP     DONE_LOAD
     
 ADDQ_ADDRESSING:
-    MOVE.B  #$9,D1  ; print tab after opcode
+    MOVE.B  #$9,D1 ; Print tab after opcode
     MOVE.B  #6,D0
     TRAP    #15
 
@@ -1670,8 +1705,7 @@ ADDQ_ADDRESSING:
     MOVE.B  #14,D0
     TRAP    #15
 
-    ; move data into D1
-    MOVE.W  (A5), D1
+    MOVE.W  (A5),D1 ; Move data into D1
     LSR.W   #8,D1
     LSR.W   #1,D1
     AND.W  #$7, D1
@@ -1686,26 +1720,22 @@ ADDQ_ADDRESSING:
     MOVE.L  #1,D4
     BRA EA_REG
     
-    ; BRA DONE_LOAD
-    
 SUB_ADDRESSING:
-    MOVE.B  #$9,D1  ; print tab after opcode
+    MOVE.B  #$9,D1  ; Print tab after opcode
     MOVE.B  #6,D0
     TRAP    #15
 
-    ; move opmode into D2
-    MOVE.W  (A5), D2
+    MOVE.W  (A5),D2 ; Move opmode into D2
     LSR.W   #6,D2
     AND.W  #$7, D2 
     
     CMP.B   #2,D4
     BEQ     EA_REG
-    
-    ; remember that D4 is 0 by default: signal that we are doing Dn - <ea> -> Dn case
-    CMP.B   #4,D2
+                    ; Remember that D4 is 0 by default: 
+    CMP.B   #4,D2   ; signal that we are doing Dn - <ea> -> Dn case
     BLT     EA_REG
     
-    ; if we are here we do: <ea> - Dn -> <ea>
+                    ; If we are here we do: <ea> - Dn -> <ea>
     MOVE.L  #1,D4   ; signal that we are doing <ea> - Dn -> <ea> case
     JSR     PRINT_DREG
 
@@ -1713,11 +1743,8 @@ SUB_ADDRESSING:
     MOVE.B  #14,D0
     TRAP    #15
     
-    ;BRA DONE_LOAD
-    
 EA_REG:
-    ; move mode into D3
-    MOVE.W  (A5), D3
+    MOVE.W  (A5),D3 ; Move mode into D3
     LSR.W   #3,D3
     AND.W  #$7, D3
     
@@ -1739,16 +1766,122 @@ EA_REG:
     CMP     #7, D3
     BEQ     PRINT_Rxxx
     
+
+    CMP     #6,D4   ; We're done if in <ea> - Dn -> <ea> mode
+    BEQ     DONE_RTS
+
     BRA     DONE_LOAD
 
+REG_WITH_MODE:
+    MOVE.W  (A5),D3 ; Move mode into D3
+    LSR.W   #6,D3
+    AND.W  #$7, D3
+    
+    CMP     #7, D3
+    BEQ     PRINT_Rxxx2
+    
+    CMP.B   #0, D3
+    BEQ     PRINT_Dn2
+    
+    CMP     #1, D3
+    BEQ     PRINT_An2
+    
+    CMP     #2, D3
+    BEQ     PRINT_RAn2
+    
+    CMP     #3, D3
+    BEQ     PRINT_RAnI2
+    
+    CMP     #4, D3
+    BEQ     PRINT_RAnD2
+    
+    CMP     #6,D4
+    BEQ     DONE_RTS
+
+    RTS
+
+PRINT_Rxxx2:
+    LEA     premssg_hex, A1 ; print $ 
+    MOVE.B  #14,D0
+    TRAP    #15
+
+    MOVE.W  (A5),D2 ; we have to set the register for Rxxx
+    LSR.W   #8, D2
+    LSR.W   #1, D2
+    AND.W   #7, D2
+    MOVE.L  A5,A4
+    ;ADD     #2,A4
+    ADD     D7,A4
+    JSR     Rxxx_POSTREG
+
+    ADD    D7,A5
+    ;MOVE   A4,A5
+    RTS
+
+PRINT_Dn2:
+
+    JSR     PRINT_DREG
+    RTS
+
+PRINT_An2:
+    MOVE.B  #$41,D1 ; print A
+    MOVE.B  #6,D0
+    TRAP    #15
+
+    JSR     PRINT_REG
+
+    RTS
+
+PRINT_RAn2:
+    LEA     premssg_pA, A1
+    MOVE.B  #14,D0
+    TRAP    #15
+
+    JSR     PRINT_REG
+    
+    LEA     postmssg_p, A1
+    MOVE.B  #14,D0
+    TRAP    #15
+
+    RTS
+
+PRINT_RAnI2:
+    LEA     premssg_pA, A1
+    MOVE.B  #14,D0
+    TRAP    #15
+
+    JSR     PRINT_REG
+    
+    LEA     postmssg_p_plus, A1
+    MOVE.B  #14,D0
+    TRAP    #15
+
+    RTS
+
+PRINT_RAnD2:
+    LEA     premssg_minus_pA, A1
+    MOVE.B  #14,D0
+    TRAP    #15
+
+    JSR     PRINT_REG
+    
+    LEA     postmssg_p, A1
+    MOVE.B  #14,D0
+    TRAP    #15
+
+    RTS
+
 PRINT_Dn:
-    MOVE.B  #$44,D1 ; print D
+    MOVE.B  #$44,D1  ; Print D
     MOVE.B  #6,D0
     TRAP    #15
 
     JSR     PRINT_EA
+
+    CMP     #6,D4    ; We're done if in <ea> - Dn -> <ea> mode
+    BEQ     DONE_RTS
     
-    CMP     #1,D4       ; we're done if in <ea> - Dn -> <ea> mode
+    CMP     #1,D4    ; We're done if in <ea> - Dn -> <ea> mode
     BEQ     DONE_LOAD
     
     LEA     comma, A1
@@ -1760,13 +1893,16 @@ PRINT_Dn:
     BRA     DONE_LOAD
     
 PRINT_An:
-    MOVE.B  #$41,D1 ; print A
+    MOVE.B  #$41,D1  ; Print A
     MOVE.B  #6,D0
     TRAP    #15
 
     JSR     PRINT_EA
+
+    CMP     #6,D4     ; We're done if in <ea> - Dn -> <ea> mode
+    BEQ     DONE_RTS
     
-    CMP     #1,D4       ; we're done if in <ea> - Dn -> <ea> mode
+    CMP     #1,D4     ; We're done if in <ea> - Dn -> <ea> mode
     BEQ     DONE_LOAD
     
     LEA     comma, A1
@@ -1787,7 +1923,10 @@ PRINT_RAn:
     MOVE.B  #14,D0
     TRAP    #15
 
-    CMP     #1,D4       ; we're done if in <ea> - Dn -> <ea> mode
+    CMP     #6,D4     ; We're done if in <ea> - Dn -> <ea> mode
+    BEQ     DONE_RTS
+    
+    CMP     #1,D4     ; We're done if in <ea> - Dn -> <ea> mode
     BEQ     DONE_LOAD
     
     LEA     comma, A1
@@ -1807,8 +1946,11 @@ PRINT_RAnI:
     LEA     postmssg_p_plus, A1
     MOVE.B  #14,D0
     TRAP    #15
+
+    CMP     #6,D4     ; We're done if in <ea> - Dn -> <ea> mode
+    BEQ     DONE_RTS
     
-    CMP     #1,D4       ; we're done if in <ea> - Dn -> <ea> mode
+    CMP     #1,D4     ; We're done if in <ea> - Dn -> <ea> mode
     BEQ     DONE_LOAD
     
     LEA     comma, A1
@@ -1828,8 +1970,11 @@ PRINT_RAnD:
     LEA     postmssg_p, A1
     MOVE.B  #14,D0
     TRAP    #15
+
+    CMP     #6,D4     ; We're done if in <ea> - Dn -> <ea> mode
+    BEQ     DONE_RTS
     
-    CMP     #1,D4       ; we're done if in <ea> - Dn -> <ea> mode
+    CMP     #1,D4     ; We're done if in <ea> - Dn -> <ea> mode
     BEQ     DONE_LOAD
     
     LEA     comma, A1
@@ -1840,89 +1985,96 @@ PRINT_RAnD:
     BRA     DONE_LOAD
 
 PRINT_Rxxx:
-    ; print $ 
-    LEA     premssg_hex, A1
+    LEA     premssg_hex, A1 ; print $ 
     MOVE.B  #14,D0
     TRAP    #15
 
-    ; store register in D2
-    MOVE.W  (A5),D2
-    AND.W   #7, D2
-    MOVE.L  A5, A4
-    ADD     #2, A4
+    MOVE.W  (A5),D2         ; Store register in D2
+    AND.W   #7,D2
+    MOVE.L  A5,A4
+    ADD     #2,A4
     
-    CMP.B   #0, D2
+Rxxx_POSTREG:    ; for MOVE the second time round we need to get the register from the destination
+    CMP.B   #0,D2
     BEQ     WORD_XXX
     
-    MOVE.L  #4, D3
-    LEA     postmssg_L, A3
+    MOVE.L  #4,D3
+    LEA     postmssg_L,A3
     MOVE.W  (A5),D2
     MOVE.L  (A4),D1
     BRA     POST_WORD_XXX
     
 WORD_XXX:
-    MOVE.L  #2, D3
-    LEA     postmssg_W, A3
+    MOVE.L  #2,D3
+    LEA     postmssg_W,A3
     MOVE.W  (A4),D1
     
 POST_WORD_XXX:    
-    MOVE.B  #15, D0
-    MOVE.B  #16, D2
+    MOVE.B  #15,D0
+    MOVE.B  #16,D2
     TRAP    #15
     
-    MOVE.L   A3, A1
+    MOVE.L   A3,A1
     MOVE.B  #14,D0
     TRAP    #15
 
-    CMP     #1,D4       ; we're done if in <ea> - Dn -> <ea> mode
+    CMP     #6,D4       ; We're being called as a subroutine if D4 is 6
+    BEQ     POST_WORD_DONE
+
+    CMP     #1,D4       ; We're done if in <ea> - Dn -> <ea> mode
     BEQ     POST_WORD_DONE
     
-    LEA     comma, A1
+    LEA     comma,A1
     MOVE.B  #14,D0
     TRAP    #15
     
     JSR     PRINT_DREG
+    
 POST_WORD_DONE:
-    ADD     D3, A5
+    ADD     D3,A5
+    MOVE    D3, D7  ; store how many bytes to increment the PC in D7, needed for MOVE
+    
+    CMP     #6,D4       ; We're being called as a subroutine if D4 is 6
+    BEQ     DONE_RTS
+    
     BRA     DONE_LOAD
 
 PRINT_EA:
-    MOVE.W  (A5), D1
-    AND.W   #7, D1
-    MOVE.B  #3, D0
+    MOVE.W  (A5),D1
+    AND.W   #7,D1
+    MOVE.B  #3,D0
     TRAP    #15
     RTS
 
 PRINT_DREG:
-    ; hack alert, if D4 is 2 then we are doing ADDA, so we print A instead
-    CMP.B   #2,D4
-    BNE     PRINT_D
+    CMP.B   #2,D4      ; Hack Alert:
+    BNE     PRINT_D    ; If D4 is 2 then do ADDA and print A instead
     
-    MOVE.B  #$41,D1 ; print A
+    MOVE.B  #$41,D1    ; Print A
     MOVE.B  #6,D0
     TRAP    #15
     JMP     PRINT_REG
 
 PRINT_D:
-    MOVE.B  #$44,D1 ; print D
+    MOVE.B  #$44,D1    ; Print D
     MOVE.B  #6,D0
     TRAP    #15
 PRINT_REG:
     MOVE.L  #0,D1
-    MOVE.W  (A5), D1
-    LSR.W   #8, D1
-    LSR.W   #1, D1
-    AND.W   #7, D1
-    MOVE.B  #3, D0
+    MOVE.W  (A5),D1
+    LSR.W   #8,D1
+    LSR.W   #1,D1
+    AND.W   #7,D1
+    MOVE.B  #3,D0
     TRAP    #15
     RTS
 
 DONE_LOAD: 
-; print newline
-    LEA     newline, A1
+    LEA     newline,A1 ; Print newline
     MOVE.B  #14,D0
     TRAP    #15
-
+    
+DONE_RTS:
     RTS
     
 ;=======================[OUTER LOOP condition]==========================
@@ -1930,7 +2082,7 @@ DONE_LOAD:
    
     SIMHALT           
 
-; Output   
+; OUTPUT   
 CR       EQU     $0D
 LF       EQU     $0A
 HT       EQU     $09
@@ -1971,7 +2123,7 @@ mssg1 DC.B    '     MOVE.B',0
 mssg2 DC.B    '     MOVE.L',0
 mssg3 DC.B    '     MOVE.W',0
 mssg4 DC.B    '     MOVEA.L',0
-mssg5 DC.B    '     MOVEA.w',0
+mssg5 DC.B    '     MOVEA.W',0
 mssg6 DC.B    '     RTS',0
 mssg7 DC.B    '     LEA',0
 mssg8 DC.B    '     NOT.L',0
