@@ -7,9 +7,23 @@
 *-----------------------------------------------------------
       
 START:  ORG     $1000 
+
+
+
     MOVE    #0,D5       * Used to track print lines per page
 
 ; Code
+    LEA FORMAT_MESSAGE1,A1
+    MOVE.L   #14,D0
+    TRAP     #15
+    LEA FORMAT_MESSAGE2,A1
+    TRAP     #15
+    LEA FORMAT_MESSAGE3,A1
+    TRAP     #15
+    LEA FORMAT_MESSAGE4,A1
+    TRAP     #15
+    LEA FORMAT_MESSAGE5,A1
+    TRAP     #15
     BRA STARTADDR
 
 ;========================[Request user INPUT]===========================
@@ -66,6 +80,17 @@ INPUT_DONE2:
     BNE     ENDADDR          ;check if we did end yet
 
 
+    CMP     A5,A6
+    BLE     A6_GREATER_THAN_A5
+    BRA     DECODE_LOOP
+    
+A6_GREATER_THAN_A5
+    MOVE.L  #$00000000,A5
+    MOVE.L  #$00000000,A6
+    LEA     GREATER_MESSAGE,A1
+    MOVE.L  #14,D0
+    TRAP    #15
+    BRA     STARTADDR 
 DECODE_LOOP:    
     JSR     DECODE
     
@@ -136,7 +161,7 @@ DECODE
                MOVE.W  (A5),D0     *We'll play with it here, Need to change the example
                MOVE.B  #shift,D1       *Shift 12 bits to the right  
                LSR.W   D1,D0           *Move the bits
-               MOVE.W  (A5),D1   *Store that full 16 bits at d1, again example reaplce by a5
+              MOVE.W  (A5),D1   *Store that full 16 bits at d1, again example reaplce by a5
                CMP      #0,D0
 jmp_table      BEQ.L     code0000
                CMP      #1,D0
@@ -2101,10 +2126,14 @@ PRINT_OPERAND
 ; Output   
 CR       EQU     $0D
 LF       EQU     $0A
-
+GREATER_MESSAGE DC.B    CR,LF,'ERROR,the ending address must be greater than the starting address',CR,LF,0
 newline DC.B    CR,LF,'',0
 continuation_prompt DC.B    CR,LF,'Press any key to continue...',CR,LF,0
-
+FORMAT_MESSAGE1      DC.B    'Welcome to this 68k disassembler',CR,LF,0
+FORMAT_MESSAGE2     DC.B    'To get started you will have to type in the starting',CR,LF,0
+FORMAT_MESSAGE3     DC.B    'address and ending address to be decode',CR,LF,0
+FORMAT_MESSAGE4     DC.B    'The address you type in must be capitalize and within the range',CR,LF,0
+FORMAT_MESSAGE5     DC.B    'of $00004000 and $000080000 in hexadecimal',CR,LF,0
 prompt1  DC.B CR,LF,'Enter starting adress in hexadecimal: ',CR,LF,0
 prompt2  DC.B CR,LF,'Enter ending adress in hexadecimal: ',CR,LF,0
 examp    DC.B 'Input should be 8 digits. Put leading 0s on left if needed. ',CR,LF,0
@@ -2174,6 +2203,7 @@ mssg59  DC.B  '     ASL.W',0
 mssg60  DC.B  '     ASL.B',0
 
     END    START        
+
 
 
 
