@@ -198,7 +198,20 @@ jmp_table      BEQ.L     code0000
 
 code0000       JMP         data
 
-code0001       MOVE.B      #1,D0            ;MOVE.B
+code0001       AND         #$0000003F,D1
+               LSR         #3,D1
+               CMP         #5,D1
+               BEQ         data
+               CMP         #6,D1
+               BEQ         data
+               MOVE.W      (A5),D1
+               LSR         #6,D1
+               AND         #$0000003F,D1
+               CMP         #5,D1
+               BEQ         data
+               CMP         #6,D1
+               BEQ         data
+               MOVE.B      #1,D0            ;MOVE.B
                MOVE.B      #1,D1  
                JMP         DONE
 
@@ -293,12 +306,34 @@ code0101       BTST        #8,D1
                BNE         ADDQL
                BTST         #6,D1
                BEQ         ADDQB
+               MOVE.W      (A5),D1
+               LSR          #3,D1
+               AND         #$00000007,D1
+               CMP         #5,D1
+               BEQ         data
+               CMP         #6,D1
+               BEQ         data
+               MOVE.W      (A5),D1
+               AND         #$00000003F,D1
+               CMP         #$3C,D1
+               BEQ         data
                MOVE.L      #15,D0       ;ADDQ.W
                MOVE.L      #1,D1
                JMP         DONE
                
 ADDQL          BTST        #6,D1
-               BNE.L        DATA
+               BNE.L       data
+               MOVE.W      (A5),D1
+               LSR          #3,D1
+               AND         #$00000007,D1
+               CMP         #5,D1
+               BEQ         data
+               CMP         #6,D1
+               BEQ         data
+               MOVE.W      (A5),D1
+               AND         #$00000003F,D1
+               CMP         #$3C,D1
+               BEQ         data
                MOVE.L      #16,D0      ;ADDQ.L
                MOVE.L      #1,D1
                JMP         DONE
@@ -377,7 +412,9 @@ ORW            MOVE.L      #20,D0   ;OR.W
                MOVE.L      #1,D1
                JMP         DONE
                
-ORL            MOVE.L      #21,D0   ;OR.L
+ORL            BTST        #6,D1
+               BNE         data
+               MOVE.L      #21,D0   ;OR.L
                MOVE.L      #1,D1
                JMP         DONE 
        
@@ -848,13 +885,17 @@ MOVEM_EA_REGISTER_TO_M
                
 
 MOVEA_PRINT_MASK
-
+               LEA  MASK_MESSAGE,A1
+               MOVE.L   #14,D0
+               TRAP     #15
 
 MOVEA_PRINT_MASK_END
                RTS
                
 MOVEA_PRINT_REVERSE_MASK
-
+               LEA  MASK_MESSAGE,A1
+               MOVE.L   #14,D0
+               TRAP     #15
                RTS      
                
 REGISTER_SHIFT_EA
@@ -1647,6 +1688,7 @@ PRINT_TABLE_EXIT    RTS
 
 *------------D3 States the number that A5 need to move
 ; pre
+MASK_MESSAGE         DC.B  'MASK',0
 premssg_hex          DC.B  '$',0
 premssg_tag          DC.B  '#',0
 premssg_A            DC.B  'A',0
@@ -1845,7 +1887,7 @@ load_mssg_MOVEB
      JMP     PRINT_OPCODE
     
 load_mssg_MOVEL
-     LEA     mssg1, A1
+     LEA     mssg2, A1
      JMP     PRINT_OPCODE
      
 load_mssg_MOVEW
@@ -2203,6 +2245,8 @@ mssg59  DC.B  '     ASL.W',0
 mssg60  DC.B  '     ASL.B',0
 
     END    START        
+
+
 
 
 
