@@ -922,12 +922,18 @@ REGISTER_SHIFT_IMMEDIATE
                LSR         #8,D1
                LSR         #1,D1
                AND         #$00000007,D1
+               CMP         #0,D1
+               BEQ         IMMEDIATE_SET_8
+REGISTER_SHIFT_IMMEDIATE_NEXT
                LEA         premssg_tag,A1
                MOVE.L      #14,D0
                TRAP        #15
                MOVE.L      #3,D0
                TRAP        #15
                BRA         REGISTER_SHIFT_DESTINATION
+IMMEDIATE_SET_8
+               MOVE.L      #8,D1
+               BRA         REGISTER_SHIFT_IMMEDIATE_NEXT
            
 MEMORY_SHIFT_EA
                MOVE.W     (A5),D1
@@ -2245,6 +2251,7 @@ mssg59  DC.B  '     ASL.W',0
 mssg60  DC.B  '     ASL.B',0
 
     END    START        
+
 
 
 
