@@ -40,28 +40,12 @@ This repository contains various assembly language files and projects for the 68
 - **test_codes.S68**: Test codes in S68 format, demonstrating various instructions such as `MOVE`, `ADD`, `SUB`, `AND`, `OR`, `LSL`, `LSR`, `ASR`, `ROL`, `ROR`, `JSR`, `RTS`, and `NOP`.
 - **test_codes.X68**: Test codes in X68 format, demonstrating various instructions such as `MOVE`, `ADD`, `SUB`, `AND`, `OR`, `LSL`, `LSR`, `ASR`, `ROL`, `ROR`, `JSR`, `RTS`, and `NOP`.
 
-## Functions and Details
-### Examples.L68
-- **MOVE**: Demonstrates various `MOVE` instructions, including: Move Byte, Word, and Long.
-- **ADD**: Demonstrates various `ADD` instructions, including: Add Byte, Word, and Long.
-- **SUB**: Demonstrates various `SUB` instructions, including: SUbtracting Byte, Word, and Long.
-- **AND**: Demonstrates various `AND` instructions, including: (Bitwise AND Byte), (Bitwise AND Word) and (Bitwise AND Long).
-- **OR**: Demonstrates various `OR` instructions, including: (Bitwise OR Byte), (Bitwise OR Word) and (Bitwise OR Long).
-- **LSL**: Demonstrates various `LSL` (Logical Shift Left) instructions, including: Logical Shift Left Byte, Word, and Long.
-- **LSR**: Demonstrates various `LSR` (Logical Shift Right) instructions, including: Logical SHift Right Byte, Word, and Long.
-- **ASR**: Demonstrates various `ASR` (Arithmetic Shift Right) instructions, including: Arithmetic Shift Right Byte, Word, and Long.
-- **ROL**: Demonstrates various `ROL` (Rotate Left) instructions, including: for Byte, Word, and Long.
-- **ROR**: Demonstrates various `ROR` (Rotate Right) instructions, including: for Byte, Word, and Long.
-- **JSR**: Demonstrates `JSR` (Jump to Subroutine) instructions.
-- **RTS**: Demonstrates various `RTS` (Return from Subroutine) instructions.
-- **NOP**: Demonstrates various `NOP` (No Operation) instructions.
-
 ## Usage
 To run any of the assembly files, you will need an appropriate assembler and emulator for the 68k microprocessor. 
 
 ## Contributors: 
-Group members:  @ganebe (Lok Yin Wong), @MaryamM4 (Maryam Maabreh), @JonathanLee1217 (Jonathan Lee), and @giaom (Aisha Maabreh).
-Course instructor: Dr. Ahmed Awad
+- Group members:  @ganebe (Lok Yin Wong), @MaryamM4 (Maryam Maabreh), @JonathanLee1217 (Jonathan Lee), and @giaom (Aisha Maabreh).
+- Course instructor: Dr. Ahmed Awad
 
 ## Assignment Specifications:
 1) Write an inverse assembler (disassembler) that will convert a memory image of instructions and data back to 68000 assembly language and output the disassembled code to the display. You will not be required to disassemble all of the instructions and addressing modes. The list of instructions and addressing modes is given at Required Opcodes page. Note that I'm not going to fill the memory with garbage!
