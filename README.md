@@ -47,7 +47,7 @@ To run any of the assembly files, you will need an appropriate assembler and emu
 - Group members:  @ganebe (Lok Yin Wong), @MaryamM4 (Maryam Maabreh), @JonathanLee1217 (Jonathan Lee), and @giaom (Aisha Maabreh).
 - Course instructor: Dr. Ahmed Awad
 
-## Assignment Specifications:
+## Project Specifications:
 1) Write an inverse assembler (disassembler) that will convert a memory image of instructions and data back to 68000 assembly language and output the disassembled code to the display. You will not be required to disassemble all of the instructions and addressing modes. The list of instructions and addressing modes is given at Required Opcodes page. Note that I'm not going to fill the memory with garbage!
 2) If you want to see how a disassembler works, just take one of your homework problems and load it in memory at an address after your program. Then open a memory window and see the code in memory. You can also view it as disassembled code in the simulator.
 3) DO NOT USE THE TRAP FUNCTION 60 FACILITY OF THE SIMULATOR. You must completely develop your own disassembler algorithm. If I suspect that you used TRAP function 60 I will use a search tool that I designed to scan your source code for the TRAP function 60 calls. You can only use the simulator's text I/O function, Trap Function 15, and you can only use tasks with ID 0 to 14 of Trap Function 15. Task 15 and higher of Trap Function 15 cannot be used.
