@@ -1,5 +1,6 @@
 # 68k-project
-# UWB CSS 475 A Spr, Submitted May 29th 2023
+# UWB CSS 422 B Spr 23: Hardware And Computer Organization
+Submitted May 29th 2023
 
 ## Overview
 This repository contains various assembly language files and projects for the 68k microprocessor from a group project. The files include examples, final projects, demos, experimental tests. Each file serves a different purpose, ranging from demonstrating basic concepts to implementing complex functionalities.
